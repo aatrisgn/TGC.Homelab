@@ -13,3 +13,7 @@ variable "environment" {
   }
 }
 
+variable "passphrase" {
+    type = string
+    sensitive = true
+}
