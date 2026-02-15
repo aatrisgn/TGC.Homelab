@@ -50,6 +50,11 @@ resource "azurerm_key_vault" "kv" {
   }
 }
 
+resource "tls_private_key" "vm" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
 resource "azurerm_linux_virtual_machine" "vm" {
   name                = "vm-ubuntu-homelab-${var.environment}-weu"
   location            = data.azurerm_resource_group.default_resource_group.location
@@ -67,6 +72,12 @@ resource "azurerm_linux_virtual_machine" "vm" {
     storage_account_type = "Standard_LRS"
   }
 
+
+  admin_ssh_key {
+    username   = "sysadmin"
+    public_key = tls_private_key.vm.public_key_openssh
+  }
+
   source_image_reference {
     publisher = "Canonical"
     offer     = "0001-com-ubuntu-server-jammy"
@@ -74,6 +85,21 @@ resource "azurerm_linux_virtual_machine" "vm" {
     version   = "latest"
   }
 }
+
+resource "azurerm_key_vault_secret" "ssh_private" {
+  name         = "vm-asger-ssh-private"
+  key_vault_id = azurerm_key_vault.kv.id
+  value        = tls_private_key.vm.private_key_pem
+  content_type = "application/x-pem-file"
+}
+
+resource "azurerm_key_vault_secret" "ssh_public" {
+  name         = "vm-asger-ssh-public"
+  key_vault_id = azurerm_key_vault.kv.id
+  value        = tls_private_key.vm.public_key_openssh
+  content_type = "text/plain"
+}
+
 
 resource "azurerm_virtual_machine_extension" "kv_extension" {
   name                 = "keyvault-extension"
