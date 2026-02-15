@@ -56,9 +56,17 @@ resource "tls_private_key" "vm" {
 
 resource "azurerm_user_assigned_identity" "vm_uami" {
   name                = "mi-homelab-vm-frp"
-  location            = data.azurerm_resource_group.location
-  resource_group_name = data.azurerm_resource_group.name
+  location            = data.azurerm_resource_group.default_resource_group.location
+  resource_group_name = data.azurerm_resource_group.default_resource_group.name
 }
+
+
+resource "azurerm_role_assignment" "kv_secrets_reader" {
+  scope                = azurerm_key_vault.kv.id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = azurerm_user_assigned_identity.vm_uami.principal_id
+}
+
 
 resource "azurerm_linux_virtual_machine" "vm" {
   name                = "vm-ubuntu-homelab-${var.environment}-weu"
