@@ -127,8 +127,8 @@ resource "azurerm_virtual_machine_extension" "kv_extension" {
   name               = "keyvault-extension"
   virtual_machine_id = azurerm_linux_virtual_machine.vm.id
 
-  publisher            = "Microsoft.Azure.KeyVault"
-  type                 = "KeyVaultForLinux"
+  publisher = "Microsoft.Azure.KeyVault"
+  type      = "KeyVaultForLinux"
 
   auto_upgrade_minor_version = true
 
