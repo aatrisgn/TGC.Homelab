@@ -12,8 +12,3 @@ variable "environment" {
     error_message = "The environment variable must be either 'DEV' or 'PROD'."
   }
 }
-
-variable "passphrase" {
-    type = string
-    sensitive = true
-}
