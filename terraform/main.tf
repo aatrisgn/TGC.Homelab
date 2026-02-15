@@ -142,7 +142,13 @@ resource "azurerm_virtual_machine_extension" "kv_extension" {
       pollingIntervalInS       = "3600"
       requireInitialSync       = "true"
       certificateStoreLocation = "/var/lib/waagent/Microsoft.Azure.KeyVault/"
-      observedCertificates     = [] # add cert secret IDs if you want auto-materialization
+      observedCertificates     = [ #https://kv-ath-homelab-dev-weu.vault.azure.net/certificates/test/fedd4be0c40342f8b4e8de86f6a1b455
+      {
+        url = "https://kv-ath-homelab-dev-weu.vault.azure.net/certificates/test/fedd4be0c40342f8b4e8de86f6a1b455",
+        certificateStoreLocation ="/var/lib/waagent/Microsoft.Azure.KeyVault/app1"
+      }
+      
+      ] # add cert secret IDs if you want auto-materialization
     }
   })
 
