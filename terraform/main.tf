@@ -54,12 +54,23 @@ resource "tls_private_key" "vm" {
   rsa_bits  = 4096
 }
 
+resource "azurerm_user_assigned_identity" "vm_uami" {
+  name                = "mi-homelab-vm-frp"
+  location            = data.azurerm_resource_group.location
+  resource_group_name = data.azurerm_resource_group.name
+}
+
 resource "azurerm_linux_virtual_machine" "vm" {
   name                = "vm-ubuntu-homelab-${var.environment}-weu"
   location            = data.azurerm_resource_group.default_resource_group.location
   resource_group_name = data.azurerm_resource_group.default_resource_group.name
   size                = "Standard_B2pls_v2"
   admin_username      = "sysadmin"
+
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.vm_uami.id]
+  }
 
   network_interface_ids = [
     azurerm_network_interface.nic.id
@@ -105,23 +116,33 @@ resource "azurerm_key_vault_secret" "ssh_public" {
 
 
 resource "azurerm_virtual_machine_extension" "kv_extension" {
-  name                 = "keyvault-extension"
-  virtual_machine_id   = azurerm_linux_virtual_machine.vm.id
+  name               = "keyvault-extension"
+  virtual_machine_id = azurerm_linux_virtual_machine.vm.id
+
   publisher            = "Microsoft.Azure.KeyVault"
   type                 = "KeyVaultForLinux"
-  type_handler_version = "3.0"
+  type_handler_version = "3.0" # v3+ is current; remove if you want auto-latest
 
-  settings = <<SETTINGS
-{
-  "secretsManagementSettings": {
-    "pollingIntervalInS": "3600",
-    "certificateStoreLocation": "/var/lib/waagent/Microsoft.Azure.KeyVault/",
-    "observedCertificates": [],
-    "requireInitialSync": "true"
-  }
+  # Use UAMI to authenticate to Key Vault
+  settings = jsonencode({
+    authenticationSettings = {
+      msiClientId = azurerm_user_assigned_identity.vm_uami.client_id
+      # msiEndpoint is optional; default IMDS endpoint is used
+    }
+    secretsManagementSettings = {
+      pollingIntervalInS       = "3600"
+      requireInitialSync       = "true"
+      certificateStoreLocation = "/var/lib/waagent/Microsoft.Azure.KeyVault/"
+      observedCertificates     = [] # add cert secret IDs if you want auto-materialization
+    }
+  })
+
+  # Ensure RBAC is in place before extension starts
+  depends_on = [
+    azurerm_role_assignment.kv_secrets_reader
+  ]
 }
-SETTINGS
-}
+
 
 resource "azurerm_dns_zone" "dns_zone" {
   name                = "homelab.tgcportal.com"
