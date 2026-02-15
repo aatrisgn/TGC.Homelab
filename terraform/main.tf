@@ -140,7 +140,7 @@ resource "azurerm_virtual_machine_extension" "kv_extension" {
     }
     secretsManagementSettings = {
       pollingIntervalInS       = "3600"
-      requireInitialSync       = "true"
+      requireInitialSync       = true
       certificateStoreLocation = "/var/lib/waagent/Microsoft.Azure.KeyVault/"
       observedCertificates = [ #https://kv-ath-homelab-dev-weu.vault.azure.net/certificates/test/fedd4be0c40342f8b4e8de86f6a1b455
         {
