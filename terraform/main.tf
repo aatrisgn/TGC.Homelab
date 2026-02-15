@@ -41,13 +41,12 @@ resource "azurerm_key_vault" "kv" {
   purge_protection_enabled   = false
   soft_delete_retention_days = 7
   rbac_authorization_enabled = true
+}
 
-  access_policy {
-    tenant_id = data.azurerm_client_config.current.tenant_id
-    object_id = data.azurerm_client_config.current.object_id
-
-    secret_permissions = ["Get", "Set", "List"]
-  }
+resource "azurerm_role_assignment" "spn_kv_access" {
+  scope                = azurerm_key_vault.kv.id
+  role_definition_name = "Key Vault Administrator"
+  principal_id         = data.azurerm_client_config.current.object_id
 }
 
 resource "tls_private_key" "vm" {
@@ -87,17 +86,21 @@ resource "azurerm_linux_virtual_machine" "vm" {
 }
 
 resource "azurerm_key_vault_secret" "ssh_private" {
-  name         = "vm-asger-ssh-private"
+  name         = "vm-frp-ssh-private"
   key_vault_id = azurerm_key_vault.kv.id
   value        = tls_private_key.vm.private_key_pem
   content_type = "application/x-pem-file"
+
+  depends_on = [ azurerm_role_assignment.spn_kv_access ]
 }
 
 resource "azurerm_key_vault_secret" "ssh_public" {
-  name         = "vm-asger-ssh-public"
+  name         = "vm-frp-ssh-public"
   key_vault_id = azurerm_key_vault.kv.id
   value        = tls_private_key.vm.public_key_openssh
   content_type = "text/plain"
+
+  depends_on = [ azurerm_role_assignment.spn_kv_access ]
 }
 
 
