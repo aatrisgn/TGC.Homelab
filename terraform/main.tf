@@ -67,6 +67,11 @@ resource "azurerm_role_assignment" "kv_secrets_reader" {
   principal_id         = azurerm_user_assigned_identity.vm_uami.principal_id
 }
 
+resource "azurerm_role_assignment" "kv_certificate_reader" {
+  scope                = azurerm_key_vault.kv.id
+  role_definition_name = "Key Vault Certificate User"
+  principal_id         = azurerm_user_assigned_identity.vm_uami.principal_id
+}
 
 resource "azurerm_linux_virtual_machine" "vm" {
   name                = "vm-ubuntu-homelab-${var.environment}-weu"
