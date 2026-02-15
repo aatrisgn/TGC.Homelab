@@ -3,8 +3,14 @@ name: Deploy Terraform
 on:
   push:
     branches: ["main"]
+    paths:
+    - 'terraform/infrastructure/**'
+    - '.github/workflows/deploy_terraform.yml'
   pull_request:
     branches: ["main"]
+    paths:
+    - 'terraform/infrastructure/**'
+    - '.github/workflows/deploy_terraform.yml'
   workflow_dispatch:
 
 permissions:
@@ -48,7 +54,7 @@ jobs:
 
     - name: Terraform Plan
       id: plan
-      run: terraform plan -input=false -var-file="envs/vars.dev.tfvars" -out=tfplan #UPDATE VARS file
+      run: terraform plan -input=false -var-file="envs/vars.dev.tfvars" -out=tfplan
 
-    # - name: Terraform Apply
-    #   run: terraform apply -auto-approve tfplan
+    - name: Terraform Apply
+      run: terraform apply -auto-approve tfplan
