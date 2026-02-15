@@ -159,7 +159,8 @@ resource "azurerm_virtual_machine_extension" "kv_extension" {
 
   # Ensure RBAC is in place before extension starts
   depends_on = [
-    azurerm_role_assignment.kv_secrets_reader
+    azurerm_role_assignment.kv_secrets_reader,
+    azurerm_role_assignment.kv_certificate_reader
   ]
 }
 
