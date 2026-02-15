@@ -72,7 +72,7 @@ resource "azurerm_linux_virtual_machine" "vm" {
   name                = "vm-ubuntu-homelab-${var.environment}-weu"
   location            = data.azurerm_resource_group.default_resource_group.location
   resource_group_name = data.azurerm_resource_group.default_resource_group.name
-  size                = "Standard_B2pls_v2"
+  size                = "Standard_B2als_v2"
   admin_username      = "sysadmin"
 
   identity {
@@ -99,7 +99,7 @@ resource "azurerm_linux_virtual_machine" "vm" {
   source_image_reference {
     publisher = "Canonical"
     offer     = "ubuntu-24_04-lts"
-    sku       = "server-arm64"
+    sku       = "server"
     version   = "latest"
   }
 }
