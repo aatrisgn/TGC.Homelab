@@ -130,7 +130,7 @@ resource "azurerm_virtual_machine_extension" "kv_extension" {
   publisher = "Microsoft.Azure.KeyVault"
   type      = "KeyVaultForLinux"
 
-  auto_upgrade_minor_version = true
+  type_handler_version = "3.5.3041.185"
 
   # Use UAMI to authenticate to Key Vault
   settings = jsonencode({
