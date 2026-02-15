@@ -109,7 +109,7 @@ resource "azurerm_virtual_machine_extension" "kv_extension" {
   virtual_machine_id   = azurerm_linux_virtual_machine.vm.id
   publisher            = "Microsoft.Azure.KeyVault"
   type                 = "KeyVaultForLinux"
-  type_handler_version = "2.0"
+  type_handler_version = "3.0"
 
   settings = <<SETTINGS
 {
