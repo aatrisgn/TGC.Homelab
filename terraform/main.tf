@@ -79,8 +79,8 @@ resource "azurerm_linux_virtual_machine" "vm" {
 
   source_image_reference {
     publisher = "Canonical"
-    offer     = "0001-com-ubuntu-server-jammy"
-    sku       = "24_04-lts"
+    offer     = "ubuntu-24_04-lts"
+    sku       = "server"
     version   = "latest"
   }
 }
@@ -91,7 +91,7 @@ resource "azurerm_key_vault_secret" "ssh_private" {
   value        = tls_private_key.vm.private_key_pem
   content_type = "application/x-pem-file"
 
-  depends_on = [ azurerm_role_assignment.spn_kv_access ]
+  depends_on = [azurerm_role_assignment.spn_kv_access]
 }
 
 resource "azurerm_key_vault_secret" "ssh_public" {
@@ -100,7 +100,7 @@ resource "azurerm_key_vault_secret" "ssh_public" {
   value        = tls_private_key.vm.public_key_openssh
   content_type = "text/plain"
 
-  depends_on = [ azurerm_role_assignment.spn_kv_access ]
+  depends_on = [azurerm_role_assignment.spn_kv_access]
 }
 
 
