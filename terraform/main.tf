@@ -2,27 +2,27 @@ resource "azurerm_virtual_network" "vnet" {
   name                = "vnet-homelab-${var.environment}-weu"
   address_space       = ["10.0.0.0/16"]
   location            = data.azurerm_resource_group.default_resource_group.location
-  resource_group_name = data.azurerm_resource_group.default_resource_group.rg.name
+  resource_group_name = data.azurerm_resource_group.default_resource_group.name
 }
 
 resource "azurerm_subnet" "subnet" {
   name                 = "frp"
   address_prefixes     = ["10.0.1.0/24"]
   virtual_network_name = azurerm_virtual_network.vnet.name
-  resource_group_name  = data.azurerm_resource_group.default_resource_group.rg.name
+  resource_group_name  = data.azurerm_resource_group.default_resource_group.name
 }
 
 resource "azurerm_public_ip" "public_ip" {
   name                = "pip-homelab-${var.environment}-weu"
-  location            = data.azurerm_resource_group.default_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.default_resource_group.rg.name
+  location            = data.azurerm_resource_group.default_resource_group.location
+  resource_group_name = data.azurerm_resource_group.default_resource_group.name
   allocation_method   = "Static"
   sku                 = "Standard"
 }
 resource "azurerm_network_interface" "nic" {
   name                = "vm-nic"
-  location            = data.azurerm_resource_group.default_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.default_resource_group.rg.name
+  location            = data.azurerm_resource_group.default_resource_group.location
+  resource_group_name = data.azurerm_resource_group.default_resource_group.name
 
   ip_configuration {
     name                          = "ipconfig1"
@@ -34,8 +34,8 @@ resource "azurerm_network_interface" "nic" {
 
 resource "azurerm_key_vault" "kv" {
   name                       = "kv-ath-homelab-${var.environment}-weu"
-  location                   = data.azurerm_resource_group.default_resource_group.rg.location
-  resource_group_name        = data.azurerm_resource_group.default_resource_group.rg.name
+  location                   = data.azurerm_resource_group.default_resource_group.location
+  resource_group_name        = data.azurerm_resource_group.default_resource_group.name
   tenant_id                  = data.azurerm_client_config.current.tenant_id
   sku_name                   = "standard"
   purge_protection_enabled   = false
@@ -51,8 +51,8 @@ resource "azurerm_key_vault" "kv" {
 
 resource "azurerm_linux_virtual_machine" "vm" {
   name                = "vm-ubuntu-homelab-${var.environment}-weu"
-  location            = data.azurerm_resource_group.default_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.default_resource_group.rg.name
+  location            = data.azurerm_resource_group.default_resource_group.location
+  resource_group_name = data.azurerm_resource_group.default_resource_group.name
   size                = "Standard_B2pls_v2"
   admin_username      = "sysadmin"
 
@@ -95,13 +95,13 @@ SETTINGS
 
 resource "azurerm_dns_zone" "dns_zone" {
   name                = "homelab.tgcportal.com"
-  resource_group_name = data.azurerm_resource_group.default_resource_group.rg.name
+  resource_group_name = data.azurerm_resource_group.default_resource_group.name
 }
 
 resource "azurerm_dns_a_record" "vm_record" {
   name                = "vm-frp"
   zone_name           = azurerm_dns_zone.dns_zone.name
-  resource_group_name = data.azurerm_resource_group.default_resource_group.rg.name
+  resource_group_name = data.azurerm_resource_group.default_resource_group.name
   ttl                 = 300
   records             = [azurerm_public_ip.public_ip.ip_address]
 }
@@ -109,7 +109,7 @@ resource "azurerm_dns_a_record" "vm_record" {
 resource "azurerm_dns_a_record" "ssh_record" {
   name                = "ssh-test"
   zone_name           = azurerm_dns_zone.dns_zone.name
-  resource_group_name = data.azurerm_resource_group.default_resource_group.rg.name
+  resource_group_name = data.azurerm_resource_group.default_resource_group.name
   ttl                 = 300
   records             = [azurerm_public_ip.public_ip.ip_address]
 }
