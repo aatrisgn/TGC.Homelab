@@ -51,7 +51,7 @@ resource "azurerm_network_security_group" "vm_nsg" {
   }
 
   security_rule {
-    name                       = "Port-7500-access"
+    name                       = "Port-7600-access"
     priority                   = 970
     direction                  = "Inbound"
     access                     = "Allow"
