@@ -46,7 +46,7 @@ resource "azurerm_network_security_group" "vm_nsg" {
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "7500"
-    source_address_prefix      = "87.104.29.3"
+    source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
 
