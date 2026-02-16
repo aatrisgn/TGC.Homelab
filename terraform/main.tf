@@ -40,7 +40,7 @@ resource "azurerm_network_security_group" "vm_nsg" {
 
   security_rule {
     name                       = "Allow-Internet-Outbound"
-    priority                   = 65000
+    priority                   = 4090
     direction                  = "Outbound"
     access                     = "Allow"
     protocol                   = "*"
