@@ -39,6 +39,18 @@ resource "azurerm_network_security_group" "vm_nsg" {
   }
 
   security_rule {
+    name                       = "Port-7500-access"
+    priority                   = 990
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "7500"
+    source_address_prefix      = "87.104.29.3"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
     name                       = "Allow-Internet-Outbound"
     priority                   = 4090
     direction                  = "Outbound"
