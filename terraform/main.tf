@@ -52,7 +52,7 @@ resource "azurerm_network_security_group" "vm_nsg" {
 
   security_rule {
     name                       = "Port-80-access"
-    priority                   = 960
+    priority                   = 950
     direction                  = "Inbound"
     access                     = "Allow"
     protocol                   = "Tcp"
