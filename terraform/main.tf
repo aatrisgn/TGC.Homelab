@@ -99,13 +99,24 @@ resource "azurerm_network_security_group" "vm_nsg" {
   }
 
   security_rule {
-    name                       = "Port-80-443"
+    name                       = "Port-80"
     priority                   = 900
     direction                  = "Inbound"
     access                     = "Allow"
     protocol                   = "Tcp"
-    source_port_range          = "22"
-    destination_port_range     = "80,443"
+    source_port_range          = "*"
+    destination_port_range     = "80"
+    source_address_prefix      = "87.104.29.3"
+    destination_address_prefix = "*"
+  }
+  security_rule {
+    name                       = "Port-443"
+    priority                   = 890
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "443"
     source_address_prefix      = "87.104.29.3"
     destination_address_prefix = "*"
   }
