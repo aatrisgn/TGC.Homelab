@@ -1,0 +1,28 @@
+serverAddr = "20.105.135.19"
+serverPort = 7500
+
+[[proxies]]
+name = "web"
+type = "tcp"
+localIP = "127.0.0.1"
+localPort = k8-lb
+remotePort = 80
+transport.bandwidthLimit = "1MB"
+
+[[proxies]]
+name = "web-443"
+type = "tcp"
+localIp = "127.0.0.1"
+localPort = k8-lb
+remotePort = 443
+transport.bandwidthLimit = "1MB"
+
+[[proxies]]
+name          = "SSH"
+type          = "tcpmux"
+multiplexer   = "httpconnect"
+customDomains = ["ssh-test.homelab.tgcportal.com"]
+localIP       = "XXX"
+localPort     = 22
+
+#sudo kubectl get svc -n envoy-gateway-system -o wide
