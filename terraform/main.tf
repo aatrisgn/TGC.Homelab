@@ -300,6 +300,14 @@ resource "azurerm_dns_a_record" "vm_record" {
   records             = [azurerm_public_ip.public_ip.ip_address]
 }
 
+resource "azurerm_dns_a_record" "k8_api_record" {
+  name                = "k8-api"
+  zone_name           = azurerm_dns_zone.dns_zone.name
+  resource_group_name = data.azurerm_resource_group.default_resource_group.name
+  ttl                 = 300
+  records             = [azurerm_public_ip.public_ip.ip_address]
+}
+
 resource "azurerm_dns_a_record" "ssh_record" {
   name                = "ssh-test"
   zone_name           = azurerm_dns_zone.dns_zone.name
