@@ -1,4 +1,4 @@
-serverAddr = "20.105.135.19"
+serverAddr = "XXX"
 serverPort = 7500
 
 [[proxies]]
@@ -24,5 +24,3 @@ multiplexer   = "httpconnect"
 customDomains = ["ssh-test.homelab.tgcportal.com"]
 localIP       = "XXX"
 localPort     = 22
-
-#sudo kubectl get svc -n envoy-gateway-system -o wide
