@@ -38,7 +38,7 @@ resource "azurerm_network_security_group" "vm_nsg" {
     destination_address_prefix = "*"
   }
 
-    security_rule {
+  security_rule {
     name                       = "Allow-SSH-From-Trusted-IP-2"
     priority                   = 1100
     direction                  = "Inbound"
@@ -143,7 +143,7 @@ resource "azurerm_network_security_group" "vm_nsg" {
     destination_port_range     = "443"
     source_address_prefix      = "80.208.67.137"
     destination_address_prefix = "*"
-  }  
+  }
 
   security_rule {
     name                       = "Allow-Internet-Outbound"
