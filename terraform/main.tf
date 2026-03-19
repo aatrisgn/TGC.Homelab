@@ -12,12 +12,83 @@ resource "azurerm_subnet" "subnet" {
   resource_group_name  = data.azurerm_resource_group.default_resource_group.name
 }
 
+resource "azurerm_subnet" "app_gateway_subnet" {
+  name                 = "app-gateway"
+  address_prefixes     = ["10.0.2.0/24"]
+  virtual_network_name = azurerm_virtual_network.vnet.name
+  resource_group_name  = data.azurerm_resource_group.default_resource_group.name
+}
+
 resource "azurerm_public_ip" "public_ip" {
   name                = "pip-homelab-${var.environment}-weu"
   location            = data.azurerm_resource_group.default_resource_group.location
   resource_group_name = data.azurerm_resource_group.default_resource_group.name
   allocation_method   = "Static"
   sku                 = "Standard"
+}
+
+resource "azurerm_public_ip" "app_gateway_pip" {
+  name                = "app-gateway-pip-homelab-${var.environment}-weu"
+  resource_group_name = data.azurerm_resource_group.default_resource_group.name
+  location            = data.azurerm_resource_group.default_resource_group.location
+  allocation_method   = "Static"
+  sku                 = "Standard"
+}
+
+resource "azurerm_application_gateway" "network" {
+  name                = "agw-homelab-${var.environment}-weu"
+  resource_group_name = data.azurerm_resource_group.default_resource_group.name
+  location            = data.azurerm_resource_group.default_resource_group.location
+
+  sku {
+    name     = "Standard_v2"
+    tier     = "Standard_v2"
+    capacity = 2
+  }
+
+  gateway_ip_configuration {
+    name      = "my-gateway-ip-configuration"
+    subnet_id = azurerm_subnet.app_gateway_subnet.id
+  }
+
+  frontend_port {
+    name = "http-port"
+    port = 80
+  }
+
+  frontend_ip_configuration {
+    name                 = "app-gateway-frontend-ip"
+    public_ip_address_id = azurerm_public_ip.app_gateway_pip.id
+  }
+
+  backend_address_pool {
+    name = "app-gateway-backend-pool"
+  }
+
+  backend_http_settings {
+    name                  = "app-gateway-http-settings"
+    cookie_based_affinity = "Disabled"
+    path                  = "/path1/"
+    port                  = 80
+    protocol              = "Http"
+    request_timeout       = 60
+  }
+
+  http_listener {
+    name                           = "app-gateway-http-listener"
+    frontend_ip_configuration_name = "app-gateway-frontend-ip"
+    frontend_port_name             = "http-port"
+    protocol                       = "Http"
+  }
+
+  request_routing_rule {
+    name                       = "app-gateway-request-routing-rule"
+    priority                   = 9
+    rule_type                  = "Basic"
+    http_listener_name         = "app-gateway-http-listener"
+    backend_address_pool_name  = "app-gateway-backend-pool"
+    backend_http_settings_name = "app-gateway-http-settings"
+  }
 }
 
 # Network Security Group
@@ -158,12 +229,10 @@ resource "azurerm_network_security_group" "vm_nsg" {
   }
 }
 
-
 resource "azurerm_network_interface_security_group_association" "nic_nsg" {
   network_interface_id      = azurerm_network_interface.nic.id
   network_security_group_id = azurerm_network_security_group.vm_nsg.id
 }
-
 
 resource "azurerm_network_interface" "nic" {
   name                = "vm-nic"
@@ -205,7 +274,6 @@ resource "azurerm_user_assigned_identity" "vm_uami" {
   location            = data.azurerm_resource_group.default_resource_group.location
   resource_group_name = data.azurerm_resource_group.default_resource_group.name
 }
-
 
 resource "azurerm_role_assignment" "kv_secrets_reader" {
   scope                = azurerm_key_vault.kv.id
@@ -273,42 +341,41 @@ resource "azurerm_key_vault_secret" "ssh_public" {
   depends_on = [azurerm_role_assignment.spn_kv_access]
 }
 
+# resource "azurerm_virtual_machine_extension" "kv_extension" {
+#   name               = "keyvault-extension"
+#   virtual_machine_id = azurerm_linux_virtual_machine.vm.id
 
-resource "azurerm_virtual_machine_extension" "kv_extension" {
-  name               = "keyvault-extension"
-  virtual_machine_id = azurerm_linux_virtual_machine.vm.id
+#   publisher = "Microsoft.Azure.KeyVault"
+#   type      = "KeyVaultForLinux"
 
-  publisher = "Microsoft.Azure.KeyVault"
-  type      = "KeyVaultForLinux"
+#   type_handler_version = "3.5"
 
-  type_handler_version = "3.5"
+#   # Use UAMI to authenticate to Key Vault
+#   settings = jsonencode({
+#     authenticationSettings = {
+#       msiClientId = azurerm_user_assigned_identity.vm_uami.client_id
+#       # msiEndpoint is optional; default IMDS endpoint is used
+#     }
+#     secretsManagementSettings = {
+#       pollingIntervalInS       = "3600"
+#       requireInitialSync       = true
+#       certificateStoreLocation = "/var/lib/waagent/Microsoft.Azure.KeyVault/"
+#       observedCertificates = [ #https://kv-ath-homelab-dev-weu.vault.azure.net/certificates/test/fedd4be0c40342f8b4e8de86f6a1b455
+#         {
+#           url                      = "https://kv-ath-homelab-dev-weu.vault.azure.net/secrets/test",
+#           certificateStoreLocation = "/var/lib/waagent/Microsoft.Azure.KeyVault/app1"
+#         }
 
-  # Use UAMI to authenticate to Key Vault
-  settings = jsonencode({
-    authenticationSettings = {
-      msiClientId = azurerm_user_assigned_identity.vm_uami.client_id
-      # msiEndpoint is optional; default IMDS endpoint is used
-    }
-    secretsManagementSettings = {
-      pollingIntervalInS       = "3600"
-      requireInitialSync       = true
-      certificateStoreLocation = "/var/lib/waagent/Microsoft.Azure.KeyVault/"
-      observedCertificates = [ #https://kv-ath-homelab-dev-weu.vault.azure.net/certificates/test/fedd4be0c40342f8b4e8de86f6a1b455
-        {
-          url                      = "https://kv-ath-homelab-dev-weu.vault.azure.net/secrets/test",
-          certificateStoreLocation = "/var/lib/waagent/Microsoft.Azure.KeyVault/app1"
-        }
+#       ] # add cert secret IDs if you want auto-materialization
+#     }
+#   })
 
-      ] # add cert secret IDs if you want auto-materialization
-    }
-  })
-
-  # Ensure RBAC is in place before extension starts
-  depends_on = [
-    azurerm_role_assignment.kv_secrets_reader,
-    azurerm_role_assignment.kv_certificate_reader
-  ]
-}
+#   # Ensure RBAC is in place before extension starts
+#   depends_on = [
+#     azurerm_role_assignment.kv_secrets_reader,
+#     azurerm_role_assignment.kv_certificate_reader
+#   ]
+# }
 
 
 resource "azurerm_dns_zone" "dns_zone" {
