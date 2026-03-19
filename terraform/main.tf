@@ -69,9 +69,8 @@ resource "azurerm_application_gateway" "network" {
   backend_http_settings {
     name                  = "app-gateway-http-settings"
     cookie_based_affinity = "Disabled"
-    path                  = "/path1/"
     port                  = 80
-    protocol              = "Http"
+    protocol              = "TCP"
     request_timeout       = 60
   }
 
@@ -79,7 +78,7 @@ resource "azurerm_application_gateway" "network" {
     name                           = "app-gateway-http-listener"
     frontend_ip_configuration_name = "app-gateway-frontend-ip"
     frontend_port_name             = "http-port"
-    protocol                       = "Http"
+    protocol                       = "Tcp"
   }
 
   request_routing_rule {
