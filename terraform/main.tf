@@ -27,74 +27,22 @@ resource "azurerm_public_ip" "public_ip" {
   sku                 = "Standard"
 }
 
-resource "azurerm_public_ip" "app_gateway_pip" {
-  name                = "app-gateway-pip-homelab-${var.environment}-weu"
+resource "azurerm_public_ip" "lb_pip" {
+  name                = "pip-loadbalancer-homelab-${var.environment}-weu"
   resource_group_name = data.azurerm_resource_group.default_resource_group.name
   location            = data.azurerm_resource_group.default_resource_group.location
   allocation_method   = "Static"
   sku                 = "Standard"
 }
 
-resource "azurerm_application_gateway" "network" {
-  name                = "agw-homelab-${var.environment}-weu"
-  resource_group_name = data.azurerm_resource_group.default_resource_group.name
+resource "azurerm_lb" "example" {
+  name                = "lb-homelab-${var.environment}-weu"
   location            = data.azurerm_resource_group.default_resource_group.location
-
-  sku {
-    name     = "Standard_v2"
-    tier     = "Standard_v2"
-    capacity = 2
-  }
-
-  gateway_ip_configuration {
-    name      = "my-gateway-ip-configuration"
-    subnet_id = azurerm_subnet.app_gateway_subnet.id
-  }
-
-  frontend_port {
-    name = "http-port"
-    port = 80
-  }
+  resource_group_name = data.azurerm_resource_group.default_resource_group.name
 
   frontend_ip_configuration {
-    name                 = "app-gateway-frontend-ip"
-    public_ip_address_id = azurerm_public_ip.app_gateway_pip.id
-  }
-
-  backend_address_pool {
-    name         = "app-gateway-backend-pool"
-    ip_addresses = [azurerm_linux_virtual_machine.vm.private_ip_address]
-  }
-
-  backend_http_settings {
-    name                  = "app-gateway-http-settings"
-    cookie_based_affinity = "Disabled"
-    port                  = 81
-    protocol              = "Http"
-    request_timeout       = 60
-  }
-
-  http_listener {
-    name                           = "app-gateway-http-listener"
-    frontend_ip_configuration_name = "app-gateway-frontend-ip"
-    frontend_port_name             = "http-port"
-    protocol                       = "Http"
-  }
-
-  http_listener {
-    name                           = "app-gateway-tcp-listener"
-    frontend_ip_configuration_name = "app-gateway-frontend-ip"
-    frontend_port_name             = "tcp-port"
-    protocol                       = "TCP"
-  }
-
-  request_routing_rule {
-    name                       = "app-gateway-request-routing-rule"
-    priority                   = 9
-    rule_type                  = "Basic"
-    http_listener_name         = "app-gateway-http-listener"
-    backend_address_pool_name  = "app-gateway-backend-pool"
-    backend_http_settings_name = "app-gateway-http-settings"
+    name                 = "PublicIPAddress"
+    public_ip_address_id = azurerm_public_ip.lb_pip.id
   }
 }
 
