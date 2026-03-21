@@ -223,9 +223,9 @@ resource "azurerm_network_interface_security_group_association" "nic_nsg" {
   network_security_group_id = azurerm_network_security_group.vm_nsg.id
 }
 
-resource "azurerm_network_interface_backend_address_pool_association" "example" {
+resource "azurerm_network_interface_backend_address_pool_association" "lb_frp_backend_pool_association" {
   network_interface_id    = azurerm_network_interface.nic.id
-  ip_configuration_name   = "testconfiguration1"
+  ip_configuration_name   = azurerm_network_interface.nic.ip_configuration[0].name
   backend_address_pool_id = azurerm_lb_backend_address_pool.frp_backend_pool.id
 }
 
@@ -233,8 +233,6 @@ resource "azurerm_network_interface" "nic" {
   name                = "vm-nic"
   location            = data.azurerm_resource_group.default_resource_group.location
   resource_group_name = data.azurerm_resource_group.default_resource_group.name
-
-
 
   ip_configuration {
     name                          = "ipconfig1"
