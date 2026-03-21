@@ -223,6 +223,11 @@ resource "azurerm_network_interface_security_group_association" "nic_nsg" {
   network_security_group_id = azurerm_network_security_group.vm_nsg.id
 }
 
+resource "azurerm_network_interface_security_group_association" "nic_nsg" {
+  network_interface_id      = azurerm_network_interface.nic_pip.id
+  network_security_group_id = azurerm_network_security_group.vm_nsg.id
+}
+
 resource "azurerm_network_interface_backend_address_pool_association" "lb_frp_backend_pool_association" {
   network_interface_id    = azurerm_network_interface.nic.id
   ip_configuration_name   = azurerm_network_interface.nic.ip_configuration[0].name
@@ -239,6 +244,12 @@ resource "azurerm_network_interface" "nic" {
     subnet_id                     = azurerm_subnet.subnet.id
     private_ip_address_allocation = "Dynamic"
   }
+}
+
+resource "azurerm_network_interface" "nic_pip" {
+  name                = "vm-pip-nic"
+  location            = data.azurerm_resource_group.default_resource_group.location
+  resource_group_name = data.azurerm_resource_group.default_resource_group.name
 
   ip_configuration {
     name                          = "publicipconfig"
@@ -303,7 +314,8 @@ resource "azurerm_linux_virtual_machine" "vm" {
   }
 
   network_interface_ids = [
-    azurerm_network_interface.nic.id
+    azurerm_network_interface.nic.id,
+    azurerm_network_interface.nic_pip.id
   ]
 
   os_disk {
