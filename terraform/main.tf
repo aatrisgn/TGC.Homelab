@@ -66,7 +66,7 @@ resource "azurerm_lb_rule" "example" {
   frontend_port                  = 80
   backend_port                   = 80
   frontend_ip_configuration_name = "PublicIPAddress"
-  backend_address_pool_ids       = [azurerm_lb_backend_address_pool_address.frp_backend_pool_address.id]
+  backend_address_pool_ids       = [azurerm_lb_backend_address_pool.frp_backend_pool.id]
 }
 
 # Network Security Group
@@ -318,43 +318,6 @@ resource "azurerm_key_vault_secret" "ssh_public" {
 
   depends_on = [azurerm_role_assignment.spn_kv_access]
 }
-
-# resource "azurerm_virtual_machine_extension" "kv_extension" {
-#   name               = "keyvault-extension"
-#   virtual_machine_id = azurerm_linux_virtual_machine.vm.id
-
-#   publisher = "Microsoft.Azure.KeyVault"
-#   type      = "KeyVaultForLinux"
-
-#   type_handler_version = "3.5"
-
-#   # Use UAMI to authenticate to Key Vault
-#   settings = jsonencode({
-#     authenticationSettings = {
-#       msiClientId = azurerm_user_assigned_identity.vm_uami.client_id
-#       # msiEndpoint is optional; default IMDS endpoint is used
-#     }
-#     secretsManagementSettings = {
-#       pollingIntervalInS       = "3600"
-#       requireInitialSync       = true
-#       certificateStoreLocation = "/var/lib/waagent/Microsoft.Azure.KeyVault/"
-#       observedCertificates = [ #https://kv-ath-homelab-dev-weu.vault.azure.net/certificates/test/fedd4be0c40342f8b4e8de86f6a1b455
-#         {
-#           url                      = "https://kv-ath-homelab-dev-weu.vault.azure.net/secrets/test",
-#           certificateStoreLocation = "/var/lib/waagent/Microsoft.Azure.KeyVault/app1"
-#         }
-
-#       ] # add cert secret IDs if you want auto-materialization
-#     }
-#   })
-
-#   # Ensure RBAC is in place before extension starts
-#   depends_on = [
-#     azurerm_role_assignment.kv_secrets_reader,
-#     azurerm_role_assignment.kv_certificate_reader
-#   ]
-# }
-
 
 resource "azurerm_dns_zone" "dns_zone" {
   name                = "homelab.tgcportal.com"
