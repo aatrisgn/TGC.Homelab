@@ -58,6 +58,28 @@ resource "azurerm_lb_backend_address_pool_address" "frp_backend_pool_address" {
   ip_address              = azurerm_linux_virtual_machine.vm.private_ip_address
 }
 
+
+resource "azurerm_lb_nat_rule" "http_nat_rule" {
+  resource_group_name            = data.azurerm_resource_group.default_resource_group.name
+  loadbalancer_id                = azurerm_lb.default.id
+  name                           = "http"
+  protocol                       = "Tcp"
+  frontend_port                  = 80
+  backend_port                   = 80
+  frontend_ip_configuration_name = "PublicIPAddress"
+}
+
+
+resource "azurerm_lb_nat_rule" "https_nat_rule" {
+  resource_group_name            = data.azurerm_resource_group.default_resource_group.name
+  loadbalancer_id                = azurerm_lb.default.id
+  name                           = "https"
+  protocol                       = "Tcp"
+  frontend_port                  = 443
+  backend_port                   = 443
+  frontend_ip_configuration_name = "PublicIPAddress"
+}
+
 # Network Security Group
 resource "azurerm_network_security_group" "vm_nsg" {
   name                = "nsg-homelab-${var.environment}-weu"
