@@ -40,6 +40,7 @@ resource "azurerm_lb" "default" {
   location            = data.azurerm_resource_group.default_resource_group.location
   resource_group_name = data.azurerm_resource_group.default_resource_group.name
 
+
   frontend_ip_configuration {
     name                 = "PublicIPAddress"
     public_ip_address_id = azurerm_public_ip.lb_pip.id
@@ -47,19 +48,23 @@ resource "azurerm_lb" "default" {
 }
 
 resource "azurerm_lb_backend_address_pool" "frp_backend_pool" {
-  loadbalancer_id = azurerm_lb.default.id
-  name            = "FrpBackEndAddressPool"
+  loadbalancer_id    = azurerm_lb.default.id
+  name               = "FrpBackEndAddressPool"
+  virtual_network_id = azurerm_virtual_network.vnet.id
 }
 
 resource "azurerm_lb_backend_address_pool_address" "frp_backend_pool_address" {
   name                    = "frp-backend-address"
   backend_address_pool_id = azurerm_lb_backend_address_pool.frp_backend_pool.id
   virtual_network_id      = azurerm_virtual_network.vnet.id
-  ip_address              = azurerm_linux_virtual_machine.vm.private_ip_address
+
+
+
+  ip_address = azurerm_linux_virtual_machine.vm.private_ip_address
 }
 
 
-resource "azurerm_lb_rule" "example" {
+resource "azurerm_lb_rule" "http_rule" {
   loadbalancer_id                = azurerm_lb.default.id
   name                           = "http"
   protocol                       = "Tcp"
@@ -67,6 +72,8 @@ resource "azurerm_lb_rule" "example" {
   backend_port                   = 80
   frontend_ip_configuration_name = "PublicIPAddress"
   backend_address_pool_ids       = [azurerm_lb_backend_address_pool.frp_backend_pool.id]
+
+  tcp_reset_enabled = true
 }
 
 # Network Security Group
@@ -217,11 +224,15 @@ resource "azurerm_network_interface" "nic" {
   location            = data.azurerm_resource_group.default_resource_group.location
   resource_group_name = data.azurerm_resource_group.default_resource_group.name
 
+
+
   ip_configuration {
     name                          = "ipconfig1"
     subnet_id                     = azurerm_subnet.subnet.id
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = azurerm_public_ip.public_ip.id
+
+
   }
 }
 
@@ -271,6 +282,8 @@ resource "azurerm_linux_virtual_machine" "vm" {
   resource_group_name = data.azurerm_resource_group.default_resource_group.name
   size                = "Standard_B2pls_v2"
   admin_username      = "sysadmin"
+
+
 
   identity {
     type         = "UserAssigned"
