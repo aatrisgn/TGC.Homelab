@@ -51,12 +51,12 @@ resource "azurerm_lb_backend_address_pool" "frp_backend_pool" {
   loadbalancer_id    = azurerm_lb.default.id
   name               = "FrpBackEndAddressPool"
   virtual_network_id = azurerm_virtual_network.vnet.id
+  synchronous_mode = "Automatic"
 }
 
 resource "azurerm_lb_backend_address_pool_address" "frp_backend_pool_address" {
   name                    = "frp-backend-address"
   backend_address_pool_id = azurerm_lb_backend_address_pool.frp_backend_pool.id
-  //virtual_network_id      = azurerm_virtual_network.vnet.id
   ip_address = azurerm_linux_virtual_machine.vm.private_ip_address
 }
 
