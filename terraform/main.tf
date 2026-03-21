@@ -12,12 +12,44 @@ resource "azurerm_subnet" "subnet" {
   resource_group_name  = data.azurerm_resource_group.default_resource_group.name
 }
 
-resource "azurerm_subnet" "app_gateway_subnet" {
-  name                 = "app-gateway"
+resource "azurerm_subnet" "load_balancer_subnet" {
+  name                 = "loadbalancer"
   address_prefixes     = ["10.0.2.0/24"]
   virtual_network_name = azurerm_virtual_network.vnet.name
   resource_group_name  = data.azurerm_resource_group.default_resource_group.name
 }
+
+
+# 1) Route table for the LB-facing subnet
+resource "azurerm_route_table" "lb_subnet_rt" {
+  name                = "rt-lb-subnet"
+  location            = data.azurerm_resource_group.default_resource_group.location
+  resource_group_name = data.azurerm_resource_group.default_resource_group.name
+
+  # Optional: keep BGP propagation enabled unless you have an ER/VPN design need
+  bgp_route_propagation_enabled = true
+
+  tags = {
+    purpose = "force-egress-to-internet"
+  }
+}
+
+# 2) Default route: everything to Internet (ensures reply path uses same NIC/subnet)
+resource "azurerm_route" "lb_subnet_default_to_internet" {
+  name                = "default-to-internet"
+  resource_group_name = data.azurerm_resource_group.default_resource_group.name
+  route_table_name    = azurerm_route_table.lb_subnet_rt.name
+
+  address_prefix = "0.0.0.0/0"
+  next_hop_type  = "Internet"
+}
+
+# 3) Associate the route table to the LB-facing subnet
+resource "azurerm_subnet_route_table_association" "lb_subnet_assoc" {
+  subnet_id      = azurerm_subnet.load_balancer_subnet.id
+  route_table_id = azurerm_route_table.lb_subnet_rt.id
+}
+
 
 resource "azurerm_public_ip" "public_ip" {
   name                = "pip-homelab-${var.environment}-weu"
@@ -39,7 +71,6 @@ resource "azurerm_lb" "default" {
   name                = "lb-homelab-${var.environment}-weu"
   location            = data.azurerm_resource_group.default_resource_group.location
   resource_group_name = data.azurerm_resource_group.default_resource_group.name
-
 
   frontend_ip_configuration {
     name                 = "PublicIPAddress"
@@ -233,7 +264,7 @@ resource "azurerm_network_interface" "nic" {
 
   ip_configuration {
     name                          = "ipconfig1"
-    subnet_id                     = azurerm_subnet.subnet.id
+    subnet_id                     = azurerm_subnet.load_balancer_subnet.id
     private_ip_address_allocation = "Dynamic"
   }
 }
