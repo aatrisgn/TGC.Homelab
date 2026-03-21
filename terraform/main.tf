@@ -223,7 +223,7 @@ resource "azurerm_network_interface_security_group_association" "nic_nsg" {
   network_security_group_id = azurerm_network_security_group.vm_nsg.id
 }
 
-resource "azurerm_network_interface_security_group_association" "nic_nsg" {
+resource "azurerm_network_interface_security_group_association" "nic_pip_nsg" {
   network_interface_id      = azurerm_network_interface.nic_pip.id
   network_security_group_id = azurerm_network_security_group.vm_nsg.id
 }
