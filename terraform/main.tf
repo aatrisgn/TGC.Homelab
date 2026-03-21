@@ -48,17 +48,17 @@ resource "azurerm_lb" "default" {
 }
 
 resource "azurerm_lb_backend_address_pool" "frp_backend_pool" {
-  loadbalancer_id    = azurerm_lb.default.id
-  name               = "FrpBackEndAddressPool"
-  virtual_network_id = azurerm_virtual_network.vnet.id
-  synchronous_mode   = "Manual"
+  loadbalancer_id = azurerm_lb.default.id
+  name            = "FrpBackEndAddressPool"
+  # virtual_network_id = azurerm_virtual_network.vnet.id
+  # synchronous_mode   = "Manual"
 }
 
-resource "azurerm_lb_backend_address_pool_address" "frp_backend_pool_address" {
-  name                    = "frp-backend-address"
-  backend_address_pool_id = azurerm_lb_backend_address_pool.frp_backend_pool.id
-  ip_address              = azurerm_linux_virtual_machine.vm.private_ip_address
-}
+# resource "azurerm_lb_backend_address_pool_address" "frp_backend_pool_address" {
+#   name                    = "frp-backend-address"
+#   backend_address_pool_id = azurerm_lb_backend_address_pool.frp_backend_pool.id
+#   ip_address              = azurerm_linux_virtual_machine.vm.private_ip_address
+# }
 
 resource "azurerm_lb_probe" "http_probe" {
   loadbalancer_id = azurerm_lb.default.id
@@ -76,7 +76,8 @@ resource "azurerm_lb_rule" "http_rule" {
   backend_address_pool_ids       = [azurerm_lb_backend_address_pool.frp_backend_pool.id]
   probe_id                       = azurerm_lb_probe.http_probe.id
 
-  tcp_reset_enabled = true
+  tcp_reset_enabled     = true
+  disable_outbound_snat = true
 }
 
 # Network Security Group
@@ -222,6 +223,12 @@ resource "azurerm_network_interface_security_group_association" "nic_nsg" {
   network_security_group_id = azurerm_network_security_group.vm_nsg.id
 }
 
+resource "azurerm_network_interface_backend_address_pool_association" "example" {
+  network_interface_id    = azurerm_network_interface.nic.id
+  ip_configuration_name   = "testconfiguration1"
+  backend_address_pool_id = azurerm_lb_backend_address_pool.frp_backend_pool.id
+}
+
 resource "azurerm_network_interface" "nic" {
   name                = "vm-nic"
   location            = data.azurerm_resource_group.default_resource_group.location
@@ -234,8 +241,6 @@ resource "azurerm_network_interface" "nic" {
     subnet_id                     = azurerm_subnet.subnet.id
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = azurerm_public_ip.public_ip.id
-
-
   }
 }
 
