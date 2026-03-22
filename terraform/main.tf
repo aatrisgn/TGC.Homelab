@@ -118,7 +118,7 @@ resource "azurerm_network_security_group" "vm_nsg" {
   resource_group_name = data.azurerm_resource_group.default_resource_group.name
 
   security_rule {
-    name                       = "Allow-SSH-From-Trusted-IP"
+    name                       = "Allow-SSH-From-Trusted-IP-1"
     priority                   = 1000
     direction                  = "Inbound"
     access                     = "Allow"
@@ -149,89 +149,6 @@ resource "azurerm_network_security_group" "vm_nsg" {
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "7500"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
-
-  security_rule {
-    name                       = "Port-80-access"
-    priority                   = 950
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "80"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
-
-  security_rule {
-    name                       = "Port-7700-access"
-    priority                   = 960
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "7700"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
-
-  security_rule {
-    name                       = "Port-7600-access"
-    priority                   = 970
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "7600"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
-
-  security_rule {
-    name                       = "Port-6000-6005"
-    priority                   = 980
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "22"
-    destination_port_range     = "6000-6005"
-    source_address_prefix      = "87.104.29.3"
-    destination_address_prefix = "*"
-  }
-
-  security_rule {
-    name                       = "Port-80"
-    priority                   = 900
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "80"
-    source_address_prefix      = "87.104.29.3"
-    destination_address_prefix = "*"
-  }
-  security_rule {
-    name                       = "Port-443"
-    priority                   = 890
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "443"
-    source_address_prefix      = "87.104.29.3"
-    destination_address_prefix = "*"
-  }
-
-  security_rule {
-    name                       = "Port-443-2"
-    priority                   = 1090
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "443"
     source_address_prefix      = "80.208.67.137"
     destination_address_prefix = "*"
   }
@@ -253,18 +170,6 @@ resource "azurerm_network_security_group" "vm_lb_nsg" {
   name                = "nsg-loadbalancer-homelab-${var.environment}-weu"
   location            = data.azurerm_resource_group.default_resource_group.location
   resource_group_name = data.azurerm_resource_group.default_resource_group.name
-
-  security_rule {
-    name                       = "Port-7500-access"
-    priority                   = 990
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "7500"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
 
   security_rule {
     name                       = "Port-80-access"
