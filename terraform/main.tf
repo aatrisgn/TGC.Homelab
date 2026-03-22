@@ -314,7 +314,7 @@ resource "azurerm_network_security_group" "vm_lb_nsg" {
 
 resource "azurerm_network_interface_security_group_association" "nic_nsg" {
   network_interface_id      = azurerm_network_interface.nic.id
-  network_security_group_id = azurerm_network_security_group.loadbalancer_nsg.id
+  network_security_group_id = azurerm_network_security_group.vm_lb_nsg.id
 }
 
 resource "azurerm_network_interface_security_group_association" "nic_pip_nsg" {
