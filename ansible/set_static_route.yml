@@ -1,0 +1,116 @@
+---
+- name: Force traffic to a specific IP via a specific interface (Azure Linux)
+  hosts: azure_linux
+  become: true
+  vars:
+    route_ip: "168.63.129.16/32"   # Destination in CIDR, /32 for single IP
+    route_iface: "eth1"            # Secondary NIC to use
+    # Optional: for RHEL-family only. If you know the NM connection name, set it.
+    # Otherwise the playbook will attempt to discover it from the interface.
+    nm_connection_name: ""
+
+  pre_tasks:
+    - name: Gather facts
+      ansible.builtin.setup:
+
+    - name: Validate that the interface exists
+      ansible.builtin.command: ip -o link show "{{ route_iface }}"
+      register: iface_check
+      changed_when: false
+      failed_when: iface_check.rc != 0
+
+  tasks:
+    - name: "=== Ubuntu/Debian (netplan) route ==="
+      when: ansible_facts['os_family'] == "Debian"
+      block:
+        - name: Ensure netplan directory exists
+          ansible.builtin.file:
+            path: /etc/netplan
+            state: directory
+            mode: '0755'
+
+        - name: Create netplan route snippet for {{ route_iface }}
+          ansible.builtin.copy:
+            dest: "/etc/netplan/99-static-route-{{ route_iface }}.yaml"
+            mode: '0644'
+            content: |
+              network:
+                version: 2
+                ethernets:
+                  {{ route_iface }}:
+                    routes:
+                      - to: {{ route_ip }}
+                        scope: link
+          notify: Apply netplan
+
+        - name: Dry-run check (optional) - what route will be used after apply
+          ansible.builtin.command: ip route get "{{ route_ip.split('/')[0] }}"
+          register: preview_route
+          changed_when: false
+          failed_when: false
+
+    - name: "=== RHEL/CentOS/Rocky/Alma (NetworkManager) route ==="
+      when: ansible_facts['os_family'] == "RedHat"
+      block:
+        - name: Ensure NetworkManager is present and running
+          ansible.builtin.service:
+            name: NetworkManager
+            state: started
+            enabled: true
+
+        - name: Discover NetworkManager connection for {{ route_iface }}
+          ansible.builtin.command: >
+            nmcli -t -f NAME,DEVICE connection show --active
+          register: nmcli_conns
+          changed_when: false
+
+        - name: Pick connection name for {{ route_iface }} if not provided
+          ansible.builtin.set_fact:
+            effective_nm_conn: >-
+              {{ nm_connection_name
+                 if nm_connection_name|length > 0
+                 else (nmcli_conns.stdout_lines | select('search', ':%s$' % route_iface)
+                       | list | first | regex_replace(':.*$', '')) }}
+
+        - name: Fail if we couldn't determine the NetworkManager connection
+          ansible.builtin.fail:
+            msg: >
+              Could not determine NetworkManager connection for interface {{ route_iface }}.
+              Set 'nm_connection_name' explicitly.
+          when: effective_nm_conn is not defined or effective_nm_conn|length == 0
+
+        - name: Read existing ipv4.routes
+          ansible.builtin.command: >
+            nmcli -g ipv4.routes connection show "{{ effective_nm_conn }}"
+          register: existing_routes
+          changed_when: false
+          failed_when: false
+
+        - name: Add route if missing (idempotent)
+          ansible.builtin.command: >
+            nmcli connection modify "{{ effective_nm_conn }}"
+            +ipv4.routes "{{ route_ip }}"
+          when: >
+            (existing_routes.stdout is not defined) or
+            (route_ip not in (existing_routes.stdout | default('')))
+          notify: Reload NetworkManager connection
+
+        - name: Ensure IPv4 is on and method is auto (do not set a gateway here)
+          ansible.builtin.command: >
+            nmcli connection modify "{{ effective_nm_conn }}"
+            ipv4.method auto
+          changed_when: false
+
+        - name: Show effective routes (debug)
+          ansible.builtin.command: ip route get "{{ route_ip.split('/')[0] }}"
+          register: route_check_rhel
+          changed_when: false
+          failed_when: false
+
+  handlers:
+    - name: Apply netplan
+      ansible.builtin.command: netplan apply
+
+    - name: Reload NetworkManager connection
+      ansible.builtin.command: >
+        nmcli connection up "{{ effective_nm_conn | default(nm_connection_name) }}"

@@ -19,14 +19,11 @@ resource "azurerm_subnet" "load_balancer_subnet" {
   resource_group_name  = data.azurerm_resource_group.default_resource_group.name
 }
 
-
-# 1) Route table for the LB-facing subnet
 resource "azurerm_route_table" "lb_subnet_rt" {
   name                = "rt-lb-subnet"
   location            = data.azurerm_resource_group.default_resource_group.location
   resource_group_name = data.azurerm_resource_group.default_resource_group.name
 
-  # Optional: keep BGP propagation enabled unless you have an ER/VPN design need
   bgp_route_propagation_enabled = true
 
   tags = {
@@ -34,7 +31,6 @@ resource "azurerm_route_table" "lb_subnet_rt" {
   }
 }
 
-# 2) Default route: everything to Internet (ensures reply path uses same NIC/subnet)
 resource "azurerm_route" "lb_subnet_default_to_internet" {
   name                = "default-to-internet"
   resource_group_name = data.azurerm_resource_group.default_resource_group.name
@@ -44,12 +40,10 @@ resource "azurerm_route" "lb_subnet_default_to_internet" {
   next_hop_type  = "Internet"
 }
 
-# 3) Associate the route table to the LB-facing subnet
 resource "azurerm_subnet_route_table_association" "lb_subnet_assoc" {
   subnet_id      = azurerm_subnet.load_balancer_subnet.id
   route_table_id = azurerm_route_table.lb_subnet_rt.id
 }
-
 
 resource "azurerm_public_ip" "public_ip" {
   name                = "pip-homelab-${var.environment}-weu"
@@ -241,9 +235,86 @@ resource "azurerm_network_security_group" "vm_nsg" {
   }
 }
 
+resource "azurerm_network_security_group" "vm_lb_nsg" {
+  name                = "nsg-loadbalancer-homelab-${var.environment}-weu"
+  location            = data.azurerm_resource_group.default_resource_group.location
+  resource_group_name = data.azurerm_resource_group.default_resource_group.name
+
+  security_rule {
+    name                       = "Port-7500-access"
+    priority                   = 990
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "7500"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "Port-80-access"
+    priority                   = 950
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "80"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "Port-80"
+    priority                   = 900
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "80"
+    source_address_prefix      = "87.104.29.3"
+    destination_address_prefix = "*"
+  }
+  security_rule {
+    name                       = "Port-443"
+    priority                   = 890
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "443"
+    source_address_prefix      = "87.104.29.3"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "Port-443-2"
+    priority                   = 1090
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "443"
+    source_address_prefix      = "80.208.67.137"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "Allow-Internet-Outbound"
+    priority                   = 4090
+    direction                  = "Outbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "*"
+    destination_address_prefix = "Internet"
+  }
+}
+
 resource "azurerm_network_interface_security_group_association" "nic_nsg" {
   network_interface_id      = azurerm_network_interface.nic.id
-  network_security_group_id = azurerm_network_security_group.vm_nsg.id
+  network_security_group_id = azurerm_network_security_group.loadbalancer_nsg.id
 }
 
 resource "azurerm_network_interface_security_group_association" "nic_pip_nsg" {
