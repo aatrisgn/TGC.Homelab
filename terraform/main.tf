@@ -279,17 +279,6 @@ resource "azurerm_network_security_group" "vm_lb_nsg" {
   }
 
   security_rule {
-    name                       = "Port-80"
-    priority                   = 900
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "80"
-    source_address_prefix      = "87.104.29.3"
-    destination_address_prefix = "*"
-  }
-  security_rule {
     name                       = "Port-443"
     priority                   = 890
     direction                  = "Inbound"
@@ -297,19 +286,7 @@ resource "azurerm_network_security_group" "vm_lb_nsg" {
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "443"
-    source_address_prefix      = "87.104.29.3"
-    destination_address_prefix = "*"
-  }
-
-  security_rule {
-    name                       = "Port-443-2"
-    priority                   = 1090
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "443"
-    source_address_prefix      = "80.208.67.137"
+    source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
 
