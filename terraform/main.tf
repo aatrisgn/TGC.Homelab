@@ -97,6 +97,20 @@ resource "azurerm_lb_rule" "http_rule" {
   disable_outbound_snat = true
 }
 
+resource "azurerm_lb_rule" "https_rule" {
+  loadbalancer_id                = azurerm_lb.default.id
+  name                           = "https"
+  protocol                       = "Tcp"
+  frontend_port                  = 443
+  backend_port                   = 443
+  frontend_ip_configuration_name = "PublicIPAddress"
+  backend_address_pool_ids       = [azurerm_lb_backend_address_pool.frp_backend_pool.id]
+  probe_id                       = azurerm_lb_probe.http_probe.id
+
+  tcp_reset_enabled     = true
+  disable_outbound_snat = true
+}
+
 # Network Security Group
 resource "azurerm_network_security_group" "vm_nsg" {
   name                = "nsg-homelab-${var.environment}-weu"
