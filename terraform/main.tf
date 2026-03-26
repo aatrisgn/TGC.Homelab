@@ -111,7 +111,7 @@ resource "azurerm_lb_rule" "http_rule" {
 
 resource "azurerm_lb_rule" "frp_rule" {
   loadbalancer_id                = azurerm_lb.default.id
-  name                           = "http"
+  name                           = "frp"
   protocol                       = "Tcp"
   frontend_port                  = 7500
   backend_port                   = 7500
