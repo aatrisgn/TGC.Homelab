@@ -149,7 +149,7 @@ resource "azurerm_network_security_group" "vm_nsg" {
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "7500"
-    source_address_prefix      = azurerm_public_ip.lb_pip.ip_address
+    source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
 
