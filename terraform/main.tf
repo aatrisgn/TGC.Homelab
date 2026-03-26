@@ -17,52 +17,11 @@ resource "azurerm_virtual_network" "vnet" {
   }
 }
 
-resource "azurerm_subnet" "subnet" {
-  name                 = "frp"
-  address_prefixes     = ["10.0.1.0/24"]
-  virtual_network_name = azurerm_virtual_network.vnet.name
-  resource_group_name  = data.azurerm_resource_group.default_resource_group.name
-}
-
 resource "azurerm_subnet" "load_balancer_subnet" {
   name                 = "loadbalancer"
   address_prefixes     = ["10.0.2.0/24"]
   virtual_network_name = azurerm_virtual_network.vnet.name
   resource_group_name  = data.azurerm_resource_group.default_resource_group.name
-}
-
-resource "azurerm_route_table" "lb_subnet_rt" {
-  name                = "rt-lb-subnet"
-  location            = data.azurerm_resource_group.default_resource_group.location
-  resource_group_name = data.azurerm_resource_group.default_resource_group.name
-
-  bgp_route_propagation_enabled = true
-
-  tags = {
-    purpose = "force-egress-to-internet"
-  }
-}
-
-resource "azurerm_route" "lb_subnet_default_to_internet" {
-  name                = "default-to-internet"
-  resource_group_name = data.azurerm_resource_group.default_resource_group.name
-  route_table_name    = azurerm_route_table.lb_subnet_rt.name
-
-  address_prefix = "0.0.0.0/0"
-  next_hop_type  = "Internet"
-}
-
-resource "azurerm_subnet_route_table_association" "lb_subnet_assoc" {
-  subnet_id      = azurerm_subnet.load_balancer_subnet.id
-  route_table_id = azurerm_route_table.lb_subnet_rt.id
-}
-
-resource "azurerm_public_ip" "public_ip" {
-  name                = "pip-homelab-${var.environment}-weu"
-  location            = data.azurerm_resource_group.default_resource_group.location
-  resource_group_name = data.azurerm_resource_group.default_resource_group.name
-  allocation_method   = "Static"
-  sku                 = "Standard"
 }
 
 resource "azurerm_public_ip" "lb_pip" {
@@ -82,6 +41,17 @@ resource "azurerm_lb" "default" {
     name                 = "PublicIPAddress"
     public_ip_address_id = azurerm_public_ip.lb_pip.id
   }
+}
+
+module "bastion" {
+  source = "./modules/bastion"
+
+  resource_group_name  = data.azurerm_resource_group.default_resource_group.name
+  virtual_network_name = azurerm_virtual_network.vnet.name
+  subnet_prefix        = "10.0.3.0/26"
+  location             = data.azurerm_resource_group.default_resource_group.location
+  location_shortcode   = "weu"
+  environment          = var.environment
 }
 
 resource "azurerm_lb_backend_address_pool" "frp_backend_pool" {
@@ -135,61 +105,6 @@ resource "azurerm_lb_rule" "https_rule" {
 
   tcp_reset_enabled     = true
   disable_outbound_snat = true
-}
-
-# Network Security Group
-resource "azurerm_network_security_group" "vm_nsg" {
-  name                = "nsg-homelab-${var.environment}-weu"
-  location            = data.azurerm_resource_group.default_resource_group.location
-  resource_group_name = data.azurerm_resource_group.default_resource_group.name
-
-  security_rule {
-    name                       = "Allow-SSH-From-Trusted-IP-1"
-    priority                   = 1000
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "22"
-    source_address_prefix      = "87.104.29.3"
-    destination_address_prefix = "*"
-  }
-
-  security_rule {
-    name                       = "Allow-SSH-From-Trusted-IP-2"
-    priority                   = 1100
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "22"
-    source_address_prefix      = "80.208.67.137"
-    destination_address_prefix = "*"
-  }
-
-  security_rule {
-    name                       = "Port-7500-access"
-    priority                   = 990
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "7500"
-    source_address_prefix      = "80.208.67.137"
-    destination_address_prefix = "*"
-  }
-
-  security_rule {
-    name                       = "Allow-Internet-Outbound"
-    priority                   = 4090
-    direction                  = "Outbound"
-    access                     = "Allow"
-    protocol                   = "*"
-    source_port_range          = "*"
-    destination_port_range     = "*"
-    source_address_prefix      = "*"
-    destination_address_prefix = "Internet"
-  }
 }
 
 resource "azurerm_network_security_group" "vm_lb_nsg" {
@@ -251,11 +166,6 @@ resource "azurerm_network_interface_security_group_association" "nic_nsg" {
   network_security_group_id = azurerm_network_security_group.vm_lb_nsg.id
 }
 
-resource "azurerm_network_interface_security_group_association" "nic_pip_nsg" {
-  network_interface_id      = azurerm_network_interface.nic_pip.id
-  network_security_group_id = azurerm_network_security_group.vm_nsg.id
-}
-
 resource "azurerm_network_interface_backend_address_pool_association" "lb_frp_backend_pool_association" {
   network_interface_id    = azurerm_network_interface.nic.id
   ip_configuration_name   = azurerm_network_interface.nic.ip_configuration[0].name
@@ -271,19 +181,6 @@ resource "azurerm_network_interface" "nic" {
     name                          = "ipconfig1"
     subnet_id                     = azurerm_subnet.load_balancer_subnet.id
     private_ip_address_allocation = "Static"
-  }
-}
-
-resource "azurerm_network_interface" "nic_pip" {
-  name                = "vm-pip-nic"
-  location            = data.azurerm_resource_group.default_resource_group.location
-  resource_group_name = data.azurerm_resource_group.default_resource_group.name
-
-  ip_configuration {
-    name                          = "publicipconfig"
-    subnet_id                     = azurerm_subnet.subnet.id
-    private_ip_address_allocation = "Static"
-    public_ip_address_id          = azurerm_public_ip.public_ip.id
   }
 }
 
@@ -330,8 +227,7 @@ resource "azurerm_linux_virtual_machine" "vm" {
   }
 
   network_interface_ids = [
-    azurerm_network_interface.nic.id,
-    azurerm_network_interface.nic_pip.id
+    azurerm_network_interface.nic.id
   ]
 
   os_disk {
