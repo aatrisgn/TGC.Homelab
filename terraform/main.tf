@@ -1,20 +1,8 @@
-
-resource "azurerm_network_ddos_protection_plan" "ddos" {
-  name                = "ddos-plan-weu-001"
-  location            = data.azurerm_resource_group.default_resource_group.location
-  resource_group_name = data.azurerm_resource_group.default_resource_group.name
-}
-
 resource "azurerm_virtual_network" "vnet" {
   name                = "vnet-homelab-${var.environment}-weu"
   address_space       = ["10.0.0.0/16"]
   location            = data.azurerm_resource_group.default_resource_group.location
   resource_group_name = data.azurerm_resource_group.default_resource_group.name
-
-  ddos_protection_plan {
-    id     = azurerm_network_ddos_protection_plan.ddos.id
-    enable = true
-  }
 }
 
 resource "azurerm_subnet" "load_balancer_subnet" {
