@@ -248,32 +248,6 @@ resource "azurerm_network_interface_backend_address_pool_association" "lb_frp_ba
   backend_address_pool_id = azurerm_lb_backend_address_pool.frp_backend_pool.id
 }
 
-resource "azurerm_route_table" "lb_subnet_rt" {
-  name                = "rt-lb-subnet"
-  location            = data.azurerm_resource_group.default_resource_group.location
-  resource_group_name = data.azurerm_resource_group.default_resource_group.name
-
-  bgp_route_propagation_enabled = true
-
-  tags = {
-    purpose = "force-egress-to-internet"
-  }
-}
-
-resource "azurerm_route" "lb_subnet_default_to_internet" {
-  name                = "default-to-internet"
-  resource_group_name = data.azurerm_resource_group.default_resource_group.name
-  route_table_name    = azurerm_route_table.lb_subnet_rt.name
-
-  address_prefix = "0.0.0.0/0"
-  next_hop_type  = "Internet"
-}
-
-resource "azurerm_subnet_route_table_association" "lb_subnet_assoc" {
-  subnet_id      = azurerm_subnet.load_balancer_subnet.id
-  route_table_id = azurerm_route_table.lb_subnet_rt.id
-}
-
 resource "azurerm_network_interface" "nic" {
   name                = "vm-nic"
   location            = data.azurerm_resource_group.default_resource_group.location
