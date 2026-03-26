@@ -109,6 +109,20 @@ resource "azurerm_lb_rule" "http_rule" {
   disable_outbound_snat = true
 }
 
+resource "azurerm_lb_rule" "http_rule" {
+  loadbalancer_id                = azurerm_lb.default.id
+  name                           = "http"
+  protocol                       = "Tcp"
+  frontend_port                  = 7500
+  backend_port                   = 7500
+  frontend_ip_configuration_name = "PublicIPAddress"
+  backend_address_pool_ids       = [azurerm_lb_backend_address_pool.frp_backend_pool.id]
+  probe_id                       = azurerm_lb_probe.http_probe.id
+
+  tcp_reset_enabled     = true
+  disable_outbound_snat = true
+}
+
 resource "azurerm_lb_rule" "https_rule" {
   loadbalancer_id                = azurerm_lb.default.id
   name                           = "https"
@@ -138,18 +152,6 @@ resource "azurerm_network_security_group" "vm_nsg" {
     source_port_range          = "*"
     destination_port_range     = "22"
     source_address_prefix      = "87.104.29.3"
-    destination_address_prefix = "*"
-  }
-
-  security_rule {
-    name                       = "Allow-7500-from-lb"
-    priority                   = 1200
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "7500"
-    source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
 
@@ -316,8 +318,8 @@ resource "azurerm_linux_virtual_machine" "vm" {
   }
 
   network_interface_ids = [
-    azurerm_network_interface.nic_pip.id,
-    azurerm_network_interface.nic.id
+    azurerm_network_interface.nic.id,
+    azurerm_network_interface.nic_pip.id
   ]
 
   os_disk {
