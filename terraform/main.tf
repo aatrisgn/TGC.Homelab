@@ -143,7 +143,7 @@ resource "azurerm_network_security_group" "vm_nsg" {
 
   security_rule {
     name                       = "Allow-7500-from-lb"
-    priority                   = 1000
+    priority                   = 1200
     direction                  = "Inbound"
     access                     = "Allow"
     protocol                   = "Tcp"
