@@ -5,7 +5,6 @@ resource "azurerm_network_ddos_protection_plan" "ddos" {
   resource_group_name = data.azurerm_resource_group.default_resource_group.name
 }
 
-
 resource "azurerm_virtual_network" "vnet" {
   name                = "vnet-homelab-${var.environment}-weu"
   address_space       = ["10.0.0.0/16"]
@@ -139,6 +138,18 @@ resource "azurerm_network_security_group" "vm_nsg" {
     source_port_range          = "*"
     destination_port_range     = "22"
     source_address_prefix      = "87.104.29.3"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "Allow-7500-from-lb"
+    priority                   = 1000
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "7500"
+    source_address_prefix      = azurerm_public_ip.lb_pip.ip_address
     destination_address_prefix = "*"
   }
 
