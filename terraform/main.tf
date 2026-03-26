@@ -220,8 +220,6 @@ resource "azurerm_linux_virtual_machine" "vm" {
   size                = "Standard_B2pls_v2"
   admin_username      = "sysadmin"
 
-
-
   identity {
     type         = "UserAssigned"
     identity_ids = [azurerm_user_assigned_identity.vm_uami.id]
@@ -236,7 +234,6 @@ resource "azurerm_linux_virtual_machine" "vm" {
     caching              = "ReadWrite"
     storage_account_type = "Standard_LRS"
   }
-
 
   admin_ssh_key {
     username   = "sysadmin"
@@ -269,6 +266,7 @@ resource "azurerm_key_vault_secret" "ssh_public" {
   depends_on = [azurerm_role_assignment.spn_kv_access]
 }
 
+# Move DNS setup into module
 resource "azurerm_dns_zone" "dns_zone" {
   name                = "homelab.tgcportal.com"
   resource_group_name = data.azurerm_resource_group.default_resource_group.name
