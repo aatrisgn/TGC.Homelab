@@ -52,6 +52,7 @@ module "bastion" {
   location             = data.azurerm_resource_group.default_resource_group.location
   location_shortcode   = "weu"
   environment          = var.environment
+  virtual_network_id   = azurerm_virtual_network.vnet.id
 }
 
 resource "azurerm_lb_backend_address_pool" "frp_backend_pool" {

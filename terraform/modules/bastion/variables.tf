@@ -21,3 +21,7 @@ variable "location_shortcode" {
 variable "environment" {
     type = string
 }
+
+variable "virtual_network_id" {
+    type = string
+}
