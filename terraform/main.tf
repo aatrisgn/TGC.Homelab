@@ -109,7 +109,7 @@ resource "azurerm_lb_rule" "http_rule" {
   disable_outbound_snat = true
 }
 
-resource "azurerm_lb_rule" "http_rule" {
+resource "azurerm_lb_rule" "frp_rule" {
   loadbalancer_id                = azurerm_lb.default.id
   name                           = "http"
   protocol                       = "Tcp"
