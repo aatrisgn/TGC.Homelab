@@ -267,3 +267,11 @@ resource "azurerm_dns_a_record" "argocd_record" {
   ttl                 = 300
   records             = [azurerm_public_ip.lb_pip.ip_address]
 }
+
+resource "azurerm_dns_a_record" "homeassistant_record" {
+  name                = "homeassistant"
+  zone_name           = azurerm_dns_zone.dns_zone.name
+  resource_group_name = data.azurerm_resource_group.default_resource_group.name
+  ttl                 = 300
+  records             = [azurerm_public_ip.lb_pip.ip_address]
+}
