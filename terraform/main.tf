@@ -121,7 +121,7 @@ resource "azurerm_network_security_group" "vm_lb_nsg" {
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "7500"
-    source_address_prefix      = "80.208.67.137"
+    source_address_prefix      = "80.208.67.128"
     destination_address_prefix = "*"
   }
 
