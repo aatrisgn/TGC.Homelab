@@ -35,11 +35,6 @@ resource "scaleway_instance_ip" "public_ip" {
   project_id = data.scaleway_account_project.default_project.id
 }
 
-resource "scaleway_vpc_private_network" "proxy_private_ip" {
-  name = "private_network_instance"
-}
-
-
 resource "scaleway_instance_server" "proxy_server" {
   name       = "sis_proxy-${var.environment}_01"
   type       = "PLAY2-PICO"
@@ -51,13 +46,14 @@ resource "scaleway_instance_server" "proxy_server" {
   security_group_id = scaleway_instance_security_group.security_group.id
 
   private_network {
-    pn_id = scaleway_vpc_private_network.proxy_private_ip.id
+    pn_id = scaleway_vpc_private_network.pn_priv.id
   }
 }
 
 resource "scaleway_instance_security_group" "security_group" {
   inbound_default_policy  = "drop"
   outbound_default_policy = "accept"
+  project_id              = data.scaleway_account_project.default_project.id
 
   inbound_rule {
     action = "accept"
