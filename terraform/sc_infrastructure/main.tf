@@ -21,7 +21,7 @@ resource "scaleway_vpc" "vpc01" {
 }
 
 resource "scaleway_vpc_private_network" "pn_priv" {
-  name       = "subnet_demo"
+  name       = "proxy"
   tags       = [var.environment, "terraform"]
   project_id = data.scaleway_account_project.default_project.id
   vpc_id     = scaleway_vpc.vpc01.id
