@@ -10,7 +10,7 @@ resource "scaleway_domain_record" "homelab_a_records" {
   dns_zone = "homelab.tgcportal.com"
   name     = each.key
   type     = "A"
-  data     = scaleway_instance_ip.ip.address
+  data     = scaleway_instance_ip.public_ip.address
   ttl      = 3600
 }
 
@@ -45,14 +45,14 @@ resource "scaleway_instance_server" "proxy_server" {
   type  = "PLAY2-PICO"
   image = "ubuntu_jammy"
   ip_id = scaleway_instance_ip.public_ip.id
+  project_id = data.scaleway_account_project.default_project.id
+  tags = [var.environment, "homelab", "terraform"]
 
   security_group_id = scaleway_instance_security_group.security_group.id
 
   private_network {
     pn_id = scaleway_vpc_private_network.proxy_private_ip.id
   }
-
-  tags = [var.environment, "homelab", "terraform"]
 }
 
 resource "scaleway_instance_security_group" "security_group" {
