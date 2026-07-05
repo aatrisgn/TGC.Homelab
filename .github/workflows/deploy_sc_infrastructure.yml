@@ -1,0 +1,32 @@
+name: Deploy Terraform
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - 'terraform/sc_infrastructure/**'
+      - '.github/workflows/deploy_terraform.yml'
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  call-build:
+    uses: aatrisgn/TGC.Templates/.github/workflows/wfc_deploy_terraform_scaleway.yml@main
+    with:
+      working_directory: ./terraform/sc_infrastructure
+      state_key: "homelab.prd"
+      applyTF: true
+      var_file_path: "envs/vars.prd.tfvars"
+    secrets:
+      deployment_access_key: "${{ secrets.HOMELAB_PRD_DEPLOYMENT_ACCESS_KEY }}"
+      deployment_secret_access_key: "${{ secrets.HOMELAB_PRD_DEPLOYMENT_SECRET_ACCESS_KEY }}"
+      state_access_key: "${{ secrets.HOMELAB_PRD_STATE_ACCESS_KEY }}"
+      state_secret_access_key: "${{ secrets.HOMELAB_PRD_STATE_SECRET_ACCESS_KEY }}"
+      state_bucket_name: "${{ secrets.HOMELAB_PRD_STATE_BUCKET_NAME }}"
+      organization_id: "${{ secrets.HOMELAB_PRD_ORGANIZATION_ID }}"
