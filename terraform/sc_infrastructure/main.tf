@@ -67,6 +67,11 @@ resource "scaleway_instance_security_group" "security_group" {
 
   inbound_rule {
     action = "accept"
+    port   = "22"
+  }
+
+  inbound_rule {
+    action = "accept"
     port   = "443"
   }
 }
