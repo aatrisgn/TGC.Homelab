@@ -32,5 +32,5 @@ resource "scaleway_vpc_private_network" "pn_priv" {
 }
 
 resource "scaleway_instance_ip" "ip" {
-    Project_id = data.scaleway_account_project.default_project.id
+  Project_id = data.scaleway_account_project.default_project.id
 }
