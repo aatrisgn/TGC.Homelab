@@ -75,3 +75,28 @@ resource "scaleway_instance_security_group" "security_group" {
     port   = "443"
   }
 }
+
+resource "tls_private_key" "ssh_key" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+resource "scaleway_iam_ssh_key" "main" {
+  name       = "main"
+  public_key = sensitive(tls_private_key.ssh_key.public_key_openssh)
+  project_id = data.scaleway_account_project.default_project.id
+}
+
+## Testing
+resource "scaleway_secret" "main" {
+  name        = "foo"
+  description = "barr"
+  tags        = ["foo", "terraform"]
+  project_id  = data.scaleway_account_project.default_project.id
+}
+
+resource "scaleway_secret_version" "v1" {
+  description = "version1"
+  secret_id   = scaleway_secret.main.id
+  data        = "my_new_secret"
+}
