@@ -13,7 +13,7 @@ terraform {
       version = "~> 3.0"
     }
 
-     scaleway = {
+    scaleway = {
       source  = "scaleway/scaleway"
       version = "2.75.0"
     }

@@ -1,16 +1,16 @@
-name: Deploy Terraform
+name: Deploy Azure Infrastructure
 
 on:
-  push:
-    branches: ["main"]
-    paths:
-    - 'terraform/**'
-    - '.github/workflows/deploy_terraform.yml'
-  pull_request:
-    branches: ["main"]
-    paths:
-    - 'terraform/**'
-    - '.github/workflows/deploy_terraform.yml'
+  # push:
+  #   branches: ["main"]
+  #   paths:
+  #   - 'terraform/**'
+  #   - '.github/workflows/deploy_terraform.yml'
+  # pull_request:
+  #   branches: ["main"]
+  #   paths:
+  #   - 'terraform/**'
+  #   - '.github/workflows/deploy_terraform.yml'
   workflow_dispatch:
 
 permissions:

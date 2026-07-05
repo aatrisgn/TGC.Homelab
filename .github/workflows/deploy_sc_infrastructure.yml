@@ -1,11 +1,11 @@
-name: Deploy Terraform
+name: Deploy Scaleway Infrastructure
 
 on:
   push:
     branches: ["main"]
     paths:
       - 'terraform/sc_infrastructure/**'
-      - '.github/workflows/deploy_terraform.yml'
+      - '.github/workflows/deploy_sc_infrastructure.yml'
   pull_request:
     branches: ["main"]
   workflow_dispatch:

@@ -1,3 +1,3 @@
 locals {
-    domain_records = ["argocd", "homeassistant"]
+  domain_records = ["argocd", "homeassistant"]
 }
