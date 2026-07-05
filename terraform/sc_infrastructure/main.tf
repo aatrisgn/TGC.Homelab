@@ -1,13 +1,13 @@
-resource "scaleway_domain_zone" "domain_zone" {
-  domain     = var.environment == "prd" ? "tgcportal.com" : "dev.tgcportal.com"
-  subdomain  = "homelab"
-  project_id = data.scaleway_account_project.default_project.id
-}
+# resource "scaleway_domain_zone" "domain_zone" {
+#   domain     = var.environment == "prd" ? "tgcportal.com" : "dev.tgcportal.com"
+#   subdomain  = "homelab"
+#   project_id = data.scaleway_account_project.default_project.id
+# }
 
 resource "scaleway_domain_record" "homelab_a_records" {
   for_each = toset(local.domain_records)
 
-  dns_zone = scaleway_domain_zone.domain_zone.id
+  dns_zone = "homelab.tgcportal.com"
   name     = each.key
   type     = "A"
   data     = "1.2.3.4"
