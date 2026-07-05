@@ -41,12 +41,12 @@ resource "scaleway_vpc_private_network" "proxy_private_ip" {
 
 
 resource "scaleway_instance_server" "proxy_server" {
-  name  = "sis_proxy-${var.environment}_01"
-  type  = "PLAY2-PICO"
-  image = "ubuntu_jammy"
-  ip_id = scaleway_instance_ip.public_ip.id
+  name       = "sis_proxy-${var.environment}_01"
+  type       = "PLAY2-PICO"
+  image      = "ubuntu_jammy"
+  ip_id      = scaleway_instance_ip.public_ip.id
   project_id = data.scaleway_account_project.default_project.id
-  tags = [var.environment, "homelab", "terraform"]
+  tags       = [var.environment, "homelab", "terraform"]
 
   security_group_id = scaleway_instance_security_group.security_group.id
 
