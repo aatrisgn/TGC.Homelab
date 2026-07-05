@@ -10,7 +10,7 @@ resource "scaleway_domain_record" "homelab_a_records" {
   dns_zone = "homelab.tgcportal.com"
   name     = each.key
   type     = "A"
-  data     = "1.2.3.4"
+  data     = scaleway_instance_ip.ip.address
   ttl      = 3600
 }
 
@@ -30,3 +30,5 @@ resource "scaleway_vpc_private_network" "pn_priv" {
     subnet = "192.168.0.0/26"
   }
 }
+
+resource "scaleway_instance_ip" "ip" {}
