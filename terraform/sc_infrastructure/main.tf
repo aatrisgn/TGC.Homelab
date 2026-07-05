@@ -89,14 +89,14 @@ resource "scaleway_iam_ssh_key" "main" {
 
 ## Testing
 resource "scaleway_secret" "main" {
-  name        = "foo"
-  description = "barr"
-  tags        = ["foo", "terraform"]
+  name        = "instance_ssh_private_key"
+  description = "Private key for SSH access to the instance"
+  tags        = [var.environment, "homelab", "terraform"]
   project_id  = data.scaleway_account_project.default_project.id
 }
 
 resource "scaleway_secret_version" "v1" {
   description = "version1"
   secret_id   = scaleway_secret.main.id
-  data        = "my_new_secret"
+  data        = sensitive(tls_private_key.ssh_key.private_key_pem)
 }
