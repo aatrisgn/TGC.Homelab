@@ -16,13 +16,13 @@ resource "scaleway_domain_record" "homelab_a_records" {
 
 resource "scaleway_vpc" "vpc01" {
   name       = "homelab-${var.environment}-vpc"
-  tags       = [var.environment, "terraform"]
+  tags       = [var.environment, "homelab", "terraform"]
   project_id = data.scaleway_account_project.default_project.id
 }
 
 resource "scaleway_vpc_private_network" "pn_priv" {
   name       = "proxy"
-  tags       = [var.environment, "terraform"]
+  tags       = [var.environment, "homelab", "terraform"]
   project_id = data.scaleway_account_project.default_project.id
   vpc_id     = scaleway_vpc.vpc01.id
 
@@ -31,6 +31,46 @@ resource "scaleway_vpc_private_network" "pn_priv" {
   }
 }
 
-resource "scaleway_instance_ip" "ip" {
+resource "scaleway_instance_ip" "public_ip" {
   project_id = data.scaleway_account_project.default_project.id
+}
+
+resource "scaleway_vpc_private_network" "proxy_private_ip" {
+  name = "private_network_instance"
+}
+
+
+resource "scaleway_instance_server" "proxy_server" {
+  name  = "sis_proxy-${var.environment}_01"
+  type  = "PLAY2-PICO"
+  image = "ubuntu_jammy"
+  ip_id = scaleway_instance_ip.public_ip.id
+
+  security_group_id = scaleway_instance_security_group.security_group.id
+
+  private_network {
+    pn_id = scaleway_vpc_private_network.proxy_private_ip.id
+  }
+
+  tags = [var.environment, "homelab", "terraform"]
+}
+
+resource "scaleway_instance_security_group" "security_group" {
+  inbound_default_policy  = "drop"
+  outbound_default_policy = "accept"
+
+  inbound_rule {
+    action = "accept"
+    port   = "7500"
+  }
+
+  inbound_rule {
+    action = "accept"
+    port   = "80"
+  }
+
+  inbound_rule {
+    action = "accept"
+    port   = "443"
+  }
 }
