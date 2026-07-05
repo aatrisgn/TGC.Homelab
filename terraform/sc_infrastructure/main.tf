@@ -52,7 +52,7 @@ resource "scaleway_instance_server" "proxy_server" {
       users:
         - name: root
           ssh_authorized_keys:
-            - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEQ2kH/HLLSt23tf6uH03HTh3dgbpi0QEnLV5sW0cXuL
+            - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEQ2kH/HLLSt23tf6uH03HTh3dgbpi0QEnLV5sW0cXuL asgerarnbjornthyregod@Asgers-MacBook-Pro.local
     EOF
   }
 
