@@ -45,17 +45,6 @@ resource "scaleway_instance_server" "proxy_server" {
 
   security_group_id = scaleway_instance_security_group.security_group.id
 
-
-  user_data = {
-    cloud-init = <<-EOF
-      #cloud-config
-      users:
-        - name: root
-          ssh_authorized_keys:
-            - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEQ2kH/HLLSt23tf6uH03HTh3dgbpi0QEnLV5sW0cXuL asgerarnbjornthyregod@Asgers-MacBook-Pro.local
-    EOF
-  }
-
   private_network {
     pn_id = scaleway_vpc_private_network.pn_priv.id
   }
