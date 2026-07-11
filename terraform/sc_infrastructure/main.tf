@@ -81,7 +81,6 @@ resource "scaleway_iam_ssh_key" "main" {
   project_id = data.scaleway_account_project.default_project.id
 }
 
-## Testing
 resource "scaleway_secret" "main" {
   name        = "instance_ssh_private_key"
   description = "Private key for SSH access to the instance"
