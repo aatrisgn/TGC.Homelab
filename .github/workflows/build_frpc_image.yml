@@ -1,0 +1,117 @@
+name: Build and publish frpc image
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - 'src/frpc/**'
+      - '.github/workflows/build_frpc_image.yml'
+  pull_request:
+    branches: ["main"]
+    paths:
+      - 'src/frpc/**'
+      - '.github/workflows/build_frpc_image.yml'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: write
+  pull-requests: write
+
+env:
+  image_name: tgc-homelab-frpc
+  app_path: src/frpc
+  sccr_registry: rg.fr-par.scw.cloud/crn-shared-prd-scr-lz-fr-par
+  frp_version: 0.71.0
+
+jobs:
+  version:
+    name: Generate version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Generate version
+      id: version
+      shell: pwsh
+      run: ./.github/scripts/generate_version.ps1
+
+  build:
+    name: Build ${{ matrix.arch }} image
+    needs: version
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Login to SCCR
+      run: docker login ${{ env.sccr_registry }} -u nologin --password-stdin <<< "${{ secrets.HOMELAB_PRD_DEPLOYMENT_SECRET_ACCESS_KEY }}"
+
+    - name: Download frpc binary
+      run: |
+        archive="frp_${{ env.frp_version }}_linux_${{ matrix.arch }}"
+        base_url="https://github.com/fatedier/frp/releases/download/v${{ env.frp_version }}"
+        cd "$RUNNER_TEMP"
+        curl -fsSLO "$base_url/$archive.tar.gz"
+        curl -fsSLO "$base_url/frp_sha256_checksums.txt"
+        sha256sum -c --ignore-missing frp_sha256_checksums.txt
+        tar -xzf "$archive.tar.gz" "$archive/frpc"
+        mkdir -p "$GITHUB_WORKSPACE/${{ env.app_path }}/binaries"
+        install -m 0755 "$archive/frpc" "$GITHUB_WORKSPACE/${{ env.app_path }}/binaries/frpc_linux_${{ matrix.arch }}"
+
+    - name: Build and publish ${{ matrix.arch }} image to SCCR
+      run: |
+        docker buildx build . \
+          --platform linux/${{ matrix.arch }} \
+          --tag ${{ env.sccr_registry }}/${{ env.image_name }}:${{ needs.version.outputs.version }}-${{ matrix.arch }} \
+          --push
+      working-directory: ${{ env.app_path }}
+
+  merge:
+    name: Publish multi-arch manifest
+    needs: [version, build]
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Login to SCCR
+      run: docker login ${{ env.sccr_registry }} -u nologin --password-stdin <<< "${{ secrets.HOMELAB_PRD_DEPLOYMENT_SECRET_ACCESS_KEY }}"
+
+    - name: Create and push manifest
+      run: |
+        IMAGE="${{ env.sccr_registry }}/${{ env.image_name }}"
+        VERSION="${{ needs.version.outputs.version }}"
+        TAGS="--tag $IMAGE:$VERSION --tag $IMAGE:${{ env.frp_version }}-$VERSION"
+        if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+          TAGS="$TAGS --tag $IMAGE:latest"
+        fi
+        docker buildx imagetools create $TAGS \
+          "$IMAGE:$VERSION-amd64" \
+          "$IMAGE:$VERSION-arm64"
+
+    - name: Tag commit
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git tag ${{ needs.version.outputs.version }}
+        git push origin ${{ needs.version.outputs.version }}

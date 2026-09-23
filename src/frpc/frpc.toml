@@ -1,0 +1,19 @@
+serverAddr = "{{ .Envs.FRPC_SERVER_ADDR }}"
+serverPort = {{ .Envs.FRPC_SERVER_PORT }}
+auth.token = "{{ .Envs.FRPC_AUTH_TOKEN }}"
+
+[[proxies]]
+name = "web"
+type = "tcp"
+localIP = "{{ .Envs.FRPC_LOCAL_IP }}"
+localPort = {{ .Envs.FRPC_HTTP_LOCAL_PORT }}
+remotePort = 80
+transport.bandwidthLimit = "1MB"
+
+[[proxies]]
+name = "web-443"
+type = "tcp"
+localIP = "{{ .Envs.FRPC_LOCAL_IP }}"
+localPort = {{ .Envs.FRPC_HTTPS_LOCAL_PORT }}
+remotePort = 443
+transport.bandwidthLimit = "1MB"

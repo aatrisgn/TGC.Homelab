@@ -400,3 +400,5 @@ FodyWeavers.xsd
 *.sln.iml
 .DS_Store
 .angular/
+# frpc binaries are downloaded at build time
+src/frpc/binaries/
