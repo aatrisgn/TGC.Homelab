@@ -27,9 +27,10 @@ dns:
   gatewayClasses:
     - gatewayclass
   ttl: 300
-  # NS records are served as <nameserver>.<zone>, e.g. ns1.streetcrocket.com
-  primaryNameserver: ns1
-  secondaryNameserver: ns2
+  # NS records are served as <nameserver>.<zone>, e.g. ns1.dns.streetcrocket.com.
+  # Must be two labels: k8s_gateway only answers A queries for the apex host when it has exactly two.
+  primaryNameserver: ns1.dns
+  secondaryNameserver: ns2.dns
 
 probes:
   healthPort: 8080
