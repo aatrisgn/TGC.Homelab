@@ -31,6 +31,11 @@ dns:
   # Must be two labels: k8s_gateway only answers A queries for the apex host when it has exactly two.
   primaryNameserver: ns1.dns
   secondaryNameserver: ns2.dns
+  # Nameservers registered at the registrars. Served as the zone's NS records,
+  # overriding k8s_gateway's own ns*.dns.<zone> names. Out-of-zone names need no glue.
+  delegatedNameservers:
+    - ns1.homelab.tgcportal.com
+    - ns2.homelab.tgcportal.com
 
 probes:
   healthPort: 8080
