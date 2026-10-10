@@ -17,3 +17,17 @@ localIP = "{{ .Envs.FRPC_LOCAL_IP }}"
 localPort = {{ .Envs.FRPC_HTTPS_LOCAL_PORT }}
 remotePort = 443
 transport.bandwidthLimit = "1MB"
+
+[[proxies]]
+name = "dns-udp"
+type = "udp"
+localIP = "{{ .Envs.FRPC_DNS_LOCAL_IP }}"
+localPort = {{ .Envs.FRPC_DNS_LOCAL_PORT }}
+remotePort = 53
+
+[[proxies]]
+name = "dns-tcp"
+type = "tcp"
+localIP = "{{ .Envs.FRPC_DNS_LOCAL_IP }}"
+localPort = {{ .Envs.FRPC_DNS_LOCAL_PORT }}
+remotePort = 53

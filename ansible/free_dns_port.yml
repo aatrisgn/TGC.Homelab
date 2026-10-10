@@ -1,0 +1,27 @@
+---
+- name: Free port 53 on the frps VPS so frps can expose the CoreDNS nameserver
+  hosts: frps
+  become: true
+
+  tasks:
+    - name: Disable the systemd-resolved stub listener on 127.0.0.53:53
+      ansible.builtin.lineinfile:
+        path: /etc/systemd/resolved.conf
+        regexp: '^#?DNSStubListener='
+        line: 'DNSStubListener=no'
+      notify: Restart systemd-resolved
+
+    - name: Point resolv.conf at the upstream resolvers instead of the disabled stub
+      ansible.builtin.file:
+        src: /run/systemd/resolve/resolv.conf
+        dest: /etc/resolv.conf
+        state: link
+        force: true
+      notify: Restart systemd-resolved
+
+  handlers:
+    - name: Restart systemd-resolved
+      ansible.builtin.service:
+        name: systemd-resolved
+        state: restarted
+

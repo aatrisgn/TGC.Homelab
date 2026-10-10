@@ -1,0 +1,27 @@
+{{- $zones := required "dns.zones must contain at least one zone" .Values.dns.zones -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.env }}-{{ .Values.appName }}-config
+  namespace: {{ .Values.namespace }}
+data:
+  # Authoritative only: no forward plugin and no catch-all zone, so queries outside the zones are REFUSED.
+  # The Service resource is limited by label to this chart's own Service, which supplies the ns1/ns2 addresses.
+  Corefile: |
+    {{- $port := .Values.service.targetPort }}
+    {{ range $i, $zone := $zones }}{{ if $i }} {{ end }}{{ $zone }}:{{ $port }}{{ end }} {
+        errors
+        log
+        health :{{ .Values.probes.healthPort }}
+        ready :{{ .Values.probes.readyPort }}
+        k8s_gateway {{ join " " $zones }} {
+            resources {{ join " " .Values.dns.resources }} Service
+            gatewayClasses {{ join " " .Values.dns.gatewayClasses }}
+            serviceLabelSelectors tgc.io/coredns-nameserver={{ .Values.env }}-{{ .Values.appName }}
+            ttl {{ .Values.dns.ttl }}
+            apex {{ .Values.dns.primaryNameserver }}
+            {{- with .Values.dns.secondaryNameserver }}
+            secondary {{ . }}
+            {{- end }}
+        }
+    }

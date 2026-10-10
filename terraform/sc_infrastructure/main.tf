@@ -68,6 +68,18 @@ resource "scaleway_instance_security_group" "security_group" {
     action = "accept"
     port   = "443"
   }
+
+  inbound_rule {
+    action   = "accept"
+    port     = "53"
+    protocol = "TCP"
+  }
+
+  inbound_rule {
+    action   = "accept"
+    port     = "53"
+    protocol = "UDP"
+  }
 }
 
 resource "tls_private_key" "ssh_key" {

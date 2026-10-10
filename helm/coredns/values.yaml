@@ -1,0 +1,39 @@
+env: prd
+namespace: corednsprd
+appName: coredns
+
+replicaCount: 2
+
+image:
+  repository: ghcr.io/k8s-gateway/k8s_gateway
+  tag: 1.8.2
+
+service:
+  port: 53
+  targetPort: 1053
+  # Public IP of the frps VPS. Used as externalIP so k8s_gateway answers ns1/ns2.<zone> with it.
+  publicIP: ""
+  # Non-existent class so no load balancer controller ever allocates an IP for the service.
+  loadBalancerClass: tgc.io/unmanaged
+
+serviceAccount:
+  name: coredns-sa
+
+dns:
+  # Zones this server is authoritative for. Records come from HTTPRoute hostnames in these zones.
+  zones: []
+  resources:
+    - HTTPRoute
+  gatewayClasses:
+    - gatewayclass
+  ttl: 300
+  # NS records are served as <nameserver>.<zone>, e.g. ns1.streetcrocket.com
+  primaryNameserver: ns1
+  secondaryNameserver: ns2
+
+probes:
+  healthPort: 8080
+  readyPort: 8181
+
+nodeSelector:
+  "node-role.kubernetes.io/worker": ""
