@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.env }}-{{ .Values.appName }}-deployment
+  namespace: {{ .Values.namespace }}
+spec:
+  revisionHistoryLimit: 2
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.env }}-{{ .Values.appName }}-app
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.env }}-{{ .Values.appName }}-app
+        version: v1
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534          # nobody; the image is FROM scratch
+        runAsGroup: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app: {{ .Values.env }}-{{ .Values.appName }}-app
+      containers:
+      - name: {{ .Values.appName }}-pod
+        image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        args: ["-conf", "/etc/coredns/Corefile"]
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]
+        ports:
+        - name: dns-udp
+          containerPort: {{ .Values.service.targetPort }}
+          protocol: UDP
+        - name: dns-tcp
+          containerPort: {{ .Values.service.targetPort }}
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            memory: 128Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: {{ .Values.probes.healthPort }}
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: {{ .Values.probes.readyPort }}
+          initialDelaySeconds: 3
+          periodSeconds: 5
+        volumeMounts:
+        - name: config
+          mountPath: /etc/coredns
+          readOnly: true
+      volumes:
+      - name: config
+        configMap:
+          name: {{ .Values.env }}-{{ .Values.appName }}-config

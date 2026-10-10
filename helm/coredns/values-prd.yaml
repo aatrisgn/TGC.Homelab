@@ -1,0 +1,11 @@
+env: prd
+namespace: corednsprd
+
+service:
+  publicIP: 51.15.251.138
+
+dns:
+  zones:
+    - streetcrocket.com
+    - asgerthyregod.dk
+    - regnerdet.nu

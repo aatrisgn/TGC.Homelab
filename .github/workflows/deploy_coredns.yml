@@ -1,0 +1,81 @@
+name: Render CoreDNS manifests
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - 'helm/coredns/**'
+      - '.github/workflows/deploy_coredns.yml'
+  pull_request:
+    branches: ["main"]
+    paths:
+      - 'helm/coredns/**'
+      - '.github/workflows/deploy_coredns.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  chart_path: helm/coredns
+  values_file: helm/coredns/values-prd.yaml
+  argocd_output_dir: coredns/prd
+
+jobs:
+  validate:
+    name: Lint and render chart
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Helm
+      uses: azure/setup-helm@v4
+
+    - name: Lint chart
+      run: helm lint ${{ env.chart_path }} -f ${{ env.values_file }}
+
+    - name: Render chart
+      run: helm template coredns ${{ env.chart_path }} -f ${{ env.values_file }}
+
+  render:
+    name: Commit rendered manifests to TGC.ArgoCD
+    needs: validate
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout TGC.Homelab
+      uses: actions/checkout@v4
+      with:
+        path: homelab
+
+    - name: Checkout ArgoCD repo
+      uses: actions/checkout@v4
+      with:
+        repository: aatrisgn/TGC.ArgoCD
+        token: ${{ secrets.ARGOCD_REPO_WRITE_TOKEN }}
+        path: argocd
+        ref: main
+
+    - name: Set up Helm
+      uses: azure/setup-helm@v4
+
+    - name: Render manifests
+      run: |
+        rm -rf "argocd/${{ env.argocd_output_dir }}"
+        mkdir -p "argocd/${{ env.argocd_output_dir }}"
+        helm template coredns "homelab/${{ env.chart_path }}" \
+          -f "homelab/${{ env.values_file }}" \
+          > "argocd/${{ env.argocd_output_dir }}/manifests.yaml"
+
+    - name: Commit rendered manifests
+      working-directory: argocd
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+
+        git add "${{ env.argocd_output_dir }}"
+        git diff --cached --quiet || git commit -m "[TGC.Homelab] chore: render prd coredns manifests [${GITHUB_SHA::7}]"
+        git pull --rebase
+        git push

@@ -1,0 +1,30 @@
+{{- $publicIP := required "service.publicIP must be set to the VPS public IP" .Values.service.publicIP -}}
+# frpc forwards public UDP/TCP 53 to this Service.
+# k8s_gateway only indexes LoadBalancer Services and reads spec.externalIPs to answer ns1/ns2.<zone>,
+# hence type LoadBalancer with an unmanaged class (no controller allocates an IP) and the VPS IP as externalIP.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.env }}-{{ .Values.appName }}-svc
+  namespace: {{ .Values.namespace }}
+  labels:
+    tgc.io/coredns-nameserver: {{ .Values.env }}-{{ .Values.appName }}
+  annotations:
+    coredns.io/hostname: {{ compact (list .Values.dns.primaryNameserver .Values.dns.secondaryNameserver) | join "," | quote }}
+spec:
+  type: LoadBalancer
+  loadBalancerClass: {{ .Values.service.loadBalancerClass }}
+  allocateLoadBalancerNodePorts: false
+  externalIPs:
+  - {{ $publicIP }}
+  selector:
+    app: {{ .Values.env }}-{{ .Values.appName }}-app
+  ports:
+  - name: dns-udp
+    protocol: UDP
+    port: {{ .Values.service.port }}
+    targetPort: {{ .Values.service.targetPort }}
+  - name: dns-tcp
+    protocol: TCP
+    port: {{ .Values.service.port }}
+    targetPort: {{ .Values.service.targetPort }}
